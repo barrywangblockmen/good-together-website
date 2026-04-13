@@ -4,6 +4,7 @@ import { NOTIFY_EMAIL } from "@/lib/constants";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { enqueueMail } from "@/lib/mail-queue";
 import { formatTaipeiTime, sendMail } from "@/lib/mail";
+import { appendSubmission } from "@/lib/submission-log";
 
 export const runtime = "nodejs";
 
@@ -66,6 +67,26 @@ export async function POST(request: Request) {
   }
 
   const data = parsed.data;
+  const userAgent = (request.headers.get("user-agent") || "").slice(0, 512);
+  const referrer = (request.headers.get("referer") || "").slice(0, 2048);
+  const createdAt = new Date().toISOString();
+
+  try {
+    await appendSubmission({
+      createdAt,
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      message: data.message,
+      consent: true,
+      ip,
+      userAgent,
+      referrer,
+    });
+  } catch {
+    return NextResponse.json({ ok: false, error: "SERVER_ERROR" }, { status: 500 });
+  }
+
   const notifyTo = process.env.NOTIFY_EMAIL || NOTIFY_EMAIL;
   const from = process.env.FROM_EMAIL;
   if (!from) {

@@ -8,5 +8,4 @@ export const NAV_LINKS = [
   { href: "/about", label: "關於協會" },
   { href: "/themes", label: "主題與課程" },
   { href: "/works", label: "成果展示" },
-  { href: "/join", label: "加入我們" },
 ] as const;

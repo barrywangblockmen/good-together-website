@@ -4,6 +4,7 @@ import { NOTIFY_EMAIL } from "@/lib/constants";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { enqueueMail } from "@/lib/mail-queue";
 import { formatTaipeiTime, sendMail } from "@/lib/mail";
+import { getGeoLabel, isLikelyBot, resolveGeoLabel } from "@/lib/traffic-intel";
 
 export const runtime = "nodejs";
 
@@ -41,6 +42,11 @@ export async function POST(request: Request) {
   }
 
   const ua = (request.headers.get("user-agent") || "").slice(0, 512);
+  let geo = getGeoLabel(ip);
+  if (geo === "待查詢") {
+    geo = await resolveGeoLabel(ip);
+  }
+  const bot = isLikelyBot(ua);
   const data = parsed.data;
   const notifyTo = process.env.NOTIFY_EMAIL || NOTIFY_EMAIL;
   const from = process.env.FROM_EMAIL;
@@ -55,6 +61,8 @@ export async function POST(request: Request) {
   <p><strong>Referrer</strong>：${data.referrer ? escapeHtml(data.referrer) : "（無）"}</p>
   <p><strong>標題</strong>：${data.title ? escapeHtml(data.title) : "（無）"}</p>
   <p><strong>IP</strong>：${escapeHtml(ip)}</p>
+  <p><strong>大概位置</strong>：${escapeHtml(geo)}</p>
+  <p><strong>流量判定</strong>：${bot ? "疑似機器人" : "一般使用者（推測）"}</p>
   <p><strong>User-Agent</strong>：</p>
   <pre style="white-space:pre-wrap;font-family:inherit">${escapeHtml(ua)}</pre>
   `;
@@ -64,7 +72,7 @@ export async function POST(request: Request) {
       sendMail({
         from,
         to: notifyTo,
-        subject: `[GT協會] 網站造訪 ${data.path} — ${formatTaipeiTime()}`,
+        subject: `[GT協會] 網站造訪 ${data.path}${bot ? " [疑似機器人]" : ""} — ${formatTaipeiTime()}`,
         html,
       })
     );
