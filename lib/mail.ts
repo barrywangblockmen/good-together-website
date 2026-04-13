@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
 export type SendMailInput = {
   to: string;
@@ -14,19 +15,52 @@ function getResend() {
   return new Resend(key);
 }
 
+function getSmtpTransporter() {
+  const host = process.env.SMTP_HOST;
+  const portRaw = process.env.SMTP_PORT;
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
+  if (!host || !user || !pass) return null;
+
+  const port = Number(portRaw || "465");
+  const secure =
+    process.env.SMTP_SECURE !== undefined
+      ? process.env.SMTP_SECURE === "true"
+      : port === 465;
+
+  return nodemailer.createTransport({
+    host,
+    port,
+    secure,
+    auth: { user, pass },
+  });
+}
+
 export async function sendMail(input: SendMailInput): Promise<void> {
+  const smtp = getSmtpTransporter();
+  if (smtp) {
+    await smtp.sendMail({
+      from: input.from,
+      to: input.to,
+      subject: input.subject,
+      html: input.html,
+      replyTo: input.replyTo,
+    });
+    return;
+  }
+
   const resend = getResend();
   if (!resend) {
-    throw new Error("RESEND_API_KEY is not configured");
+    throw new Error("SMTP and RESEND are both not configured");
   }
-  const { error } = await resend.emails.send({
+  const { data, error } = await resend.emails.send({
     from: input.from,
     to: input.to,
     subject: input.subject,
     html: input.html,
     replyTo: input.replyTo,
   });
-  if (error) {
+  if (error || !data) {
     throw new Error(error.message || "Resend error");
   }
 }

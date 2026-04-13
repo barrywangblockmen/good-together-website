@@ -34,6 +34,8 @@ npm run build
 | `PORT` | 內部監聽埠，例如 `3000` |
 | `NEXT_PUBLIC_SITE_URL` | 正式網址，例如 `https://www.example.org` |
 | `RESEND_API_KEY` | Resend API Key |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_SECURE` | SMTP 伺服器設定（Gmail: `smtp.gmail.com` / `465` / `true`） |
+| `SMTP_USER` / `SMTP_PASS` | SMTP 帳密（Gmail 建議使用 App Password） |
 | `FROM_EMAIL` | 已在 Resend 驗證網域之寄件地址 |
 | `NOTIFY_EMAIL` | 通知收件信箱（預設可為 `barrywang.blockmen@gmail.com`） |
 | `SUBMISSIONS_FILE` | 表單落地檔案路徑，例如 `/var/www/good-together/data/submissions.jsonl` |
@@ -104,3 +106,5 @@ tail -n 20 /var/www/good-together/data/submissions.jsonl
 ## 8. 寄件網域
 
 `FROM_EMAIL` 必須使用已在 **Resend**（或其他 ESP）完成 **DNS 驗證** 的網域，與網站託管於 EC2 或他處無關。
+
+若已設定 `SMTP_HOST`、`SMTP_USER`、`SMTP_PASS`，系統會優先以 SMTP（例如 Gmail）寄送，不受 Resend 網域驗證限制。
