@@ -108,3 +108,34 @@ tail -n 20 /var/www/good-together/data/submissions.jsonl
 `FROM_EMAIL` 必須使用已在 **Resend**（或其他 ESP）完成 **DNS 驗證** 的網域，與網站託管於 EC2 或他處無關。
 
 若已設定 `SMTP_HOST`、`SMTP_USER`、`SMTP_PASS`，系統會優先以 SMTP（例如 Gmail）寄送，不受 Resend 網域驗證限制。
+
+## 9. Standalone 建置後必做：複製靜態資源
+
+本專案使用 `output: "standalone"`。每次在伺服器執行 `npm run build` 後，請將建置產物複製到 standalone 目錄，否則可能出現靜態檔 404 或異常：
+
+```bash
+cd /var/www/good-together
+mkdir -p .next/standalone/.next
+rm -rf .next/standalone/.next/static .next/standalone/public
+cp -r .next/static .next/standalone/.next/static
+cp -r public .next/standalone/public
+```
+
+接著再 `pm2 restart gt-site --update-env`（建議先 `set -a; source .env.production; set +a` 再重啟，確保環境變數載入）。
+
+## 10. HTTPS（Let’s Encrypt + Certbot + Nginx）
+
+1. **DNS**：將 `A`（與選用的 `www`）指向 EC2 公網 IP；**Security Group** 需開放 `80`、`443`。
+2. **Nginx `server_name`**：在 `sites-available` 的站台設定中，將 `server_name` 改為你的網域（例如 `gtclub.tw www.gtclub.tw`），`nginx -t` 後 `reload`。
+3. **申請憑證**（首次）：
+
+```bash
+sudo apt-get update
+sudo apt-get install -y certbot python3-certbot-nginx
+sudo certbot --nginx -d gtclub.tw -d www.gtclub.tw --redirect \
+  --non-interactive --agree-tos -m your-email@example.com
+```
+
+Certbot 會自動寫入 `listen 443 ssl`、憑證路徑，並將 HTTP 導向 HTTPS。系統內建的 `certbot.timer` 會負責續期。
+
+4. **站台網址**：將 `.env.production` 的 `NEXT_PUBLIC_SITE_URL` 設為 `https://你的網域`，再重新 `npm run build`（公開網址會寫入建置產物），並依上一節複製 `static`／`public` 後重啟 PM2。
