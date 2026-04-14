@@ -16,7 +16,6 @@ export async function POST(request: Request) {
   if (!enabled) {
     return new NextResponse(null, { status: 204 });
   }
-  const debugIpHeaders = process.env.VISIT_DEBUG_IP_HEADERS === "true";
 
   let json: unknown;
   try {
@@ -33,22 +32,6 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { ok: false, error: "VALIDATION_ERROR" },
       { status: 400 }
-    );
-  }
-
-  if (debugIpHeaders) {
-    console.info(
-      "[visit-debug] ip headers",
-      JSON.stringify({
-        "cf-connecting-ip": request.headers.get("cf-connecting-ip"),
-        "x-vercel-forwarded-for": request.headers.get("x-vercel-forwarded-for"),
-        "x-forwarded-for": request.headers.get("x-forwarded-for"),
-        "x-real-ip": request.headers.get("x-real-ip"),
-        "true-client-ip": request.headers.get("true-client-ip"),
-        "x-client-ip": request.headers.get("x-client-ip"),
-        "forwarded": request.headers.get("forwarded"),
-        host: request.headers.get("host"),
-      })
     );
   }
 

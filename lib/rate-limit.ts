@@ -40,9 +40,11 @@ export function getClientIp(headers: Headers): string {
 
   for (const raw of candidates) {
     if (!raw) continue;
-    const first = raw.split(",")[0]?.trim();
-    const normalized = normalizeIp(first);
-    if (normalized) return normalized;
+    const parts = raw.split(",").map((p) => p.trim());
+    for (const part of parts) {
+      const normalized = normalizeIp(part);
+      if (normalized) return normalized;
+    }
   }
 
   return "unknown";

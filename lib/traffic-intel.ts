@@ -5,6 +5,7 @@ const PRIVATE_IP_RE =
   /^(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.|::1$|fc00:|fd00:|fe80:)/i;
 
 const geoCache = new Map<string, string>();
+const GEO_FETCH_TIMEOUT_MS = 5000;
 const GEO_UNKNOWN = "未知";
 
 type GeoProviderResult = {
@@ -32,7 +33,7 @@ export async function resolveGeoLabel(ip: string): Promise<string> {
   const cached = geoCache.get(ip);
   if (cached) return cached;
 
-  const providers = [resolveFromIpwho, resolveFromIpapi];
+  const providers = [resolveFromIpwho, resolveFromIpapi, resolveFromIpapiCom];
   for (const provider of providers) {
     try {
       const maybe = await provider(ip);
@@ -51,7 +52,10 @@ export async function resolveGeoLabel(ip: string): Promise<string> {
 }
 
 async function resolveFromIpwho(ip: string): Promise<GeoProviderResult | null> {
-  const res = await fetchWithTimeout(`https://ipwho.is/${encodeURIComponent(ip)}`, 2200);
+  const res = await fetchWithTimeout(
+    `https://ipwho.is/${encodeURIComponent(ip)}`,
+    GEO_FETCH_TIMEOUT_MS
+  );
   if (!res.ok) return null;
   const data = (await res.json()) as {
     success?: boolean;
@@ -66,7 +70,7 @@ async function resolveFromIpwho(ip: string): Promise<GeoProviderResult | null> {
 async function resolveFromIpapi(ip: string): Promise<GeoProviderResult | null> {
   const res = await fetchWithTimeout(
     `https://ipapi.co/${encodeURIComponent(ip)}/json/`,
-    2200
+    GEO_FETCH_TIMEOUT_MS
   );
   if (!res.ok) return null;
   const data = (await res.json()) as {
@@ -77,6 +81,22 @@ async function resolveFromIpapi(ip: string): Promise<GeoProviderResult | null> {
   };
   if (data.error) return null;
   return { country: data.country_name, region: data.region, city: data.city };
+}
+
+async function resolveFromIpapiCom(ip: string): Promise<GeoProviderResult | null> {
+  const res = await fetchWithTimeout(
+    `http://ip-api.com/json/${encodeURIComponent(ip)}?fields=status,country,regionName,city`,
+    GEO_FETCH_TIMEOUT_MS
+  );
+  if (!res.ok) return null;
+  const data = (await res.json()) as {
+    status?: string;
+    country?: string;
+    regionName?: string;
+    city?: string;
+  };
+  if (data.status !== "success") return null;
+  return { country: data.country, region: data.regionName, city: data.city };
 }
 
 function buildGeoLabel(data: GeoProviderResult) {
