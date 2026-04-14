@@ -29,9 +29,46 @@ export function checkRateLimit(
 }
 
 export function getClientIp(headers: Headers): string {
-  const forwarded = headers.get("x-forwarded-for");
-  if (forwarded) {
-    return forwarded.split(",")[0]?.trim() || "unknown";
+  const candidates: Array<string | null> = [
+    headers.get("cf-connecting-ip"),
+    headers.get("x-vercel-forwarded-for"),
+    headers.get("x-forwarded-for"),
+    headers.get("x-real-ip"),
+    headers.get("true-client-ip"),
+    headers.get("x-client-ip"),
+  ];
+
+  for (const raw of candidates) {
+    if (!raw) continue;
+    const first = raw.split(",")[0]?.trim();
+    const normalized = normalizeIp(first);
+    if (normalized) return normalized;
   }
-  return headers.get("x-real-ip")?.trim() || "unknown";
+
+  return "unknown";
+}
+
+function normalizeIp(value?: string) {
+  if (!value) return "";
+  const v = value.trim();
+  if (!v || v.toLowerCase() === "unknown") return "";
+
+  // Common proxy style: "::ffff:1.2.3.4"
+  if (v.startsWith("::ffff:")) {
+    return v.slice(7);
+  }
+
+  // Bracketed IPv6 + optional port: "[2001:db8::1]:443"
+  const bracket = v.match(/^\[([^[\]]+)\](?::\d+)?$/);
+  if (bracket?.[1]) {
+    return bracket[1];
+  }
+
+  // IPv4 + optional port: "1.2.3.4:12345"
+  const ipv4WithPort = v.match(/^(\d{1,3}(?:\.\d{1,3}){3})(?::\d+)?$/);
+  if (ipv4WithPort?.[1]) {
+    return ipv4WithPort[1];
+  }
+
+  return v;
 }
