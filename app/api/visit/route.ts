@@ -10,6 +10,7 @@ export const runtime = "nodejs";
 
 const WINDOW_MS = 60 * 1000;
 const MAX_VISIT = 120;
+const NOTIFY_COOLDOWN_MS = 60 * 60 * 1000;
 
 export async function POST(request: Request) {
   const enabled = process.env.VISIT_NOTIFY_ENABLED !== "false";
@@ -47,6 +48,10 @@ export async function POST(request: Request) {
     geo = await resolveGeoLabel(ip);
   }
   const bot = isLikelyBot(ua);
+  const notifyCooldown = checkRateLimit(`visit-notify:${ip}`, 1, NOTIFY_COOLDOWN_MS);
+  if (!notifyCooldown.ok) {
+    return new NextResponse(null, { status: 204 });
+  }
   const data = parsed.data;
   const notifyTo = process.env.NOTIFY_EMAIL || NOTIFY_EMAIL;
   const from = process.env.FROM_EMAIL;
