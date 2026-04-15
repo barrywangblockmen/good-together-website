@@ -1,4 +1,5 @@
 import { Hero } from "@/components/home/hero";
+import { ActivityMarquee } from "@/components/home/activity-marquee";
 import { Reveal } from "@/components/motion/reveal";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -114,6 +115,26 @@ export default function HomePage() {
           <Button href="/works" variant="ghost">
             前往成果展示
           </Button>
+        </div>
+      </section>
+
+      <section className="border-y border-edge bg-surface py-16 md:py-24">
+        <div className="mx-auto max-w-6xl px-4 md:px-6">
+          <Reveal>
+            <SectionHeading
+              eyebrow="Activities"
+              title="活動照片精選"
+              description="透過活動影像，看見我們在每次相聚中累積的連結與溫度。"
+            />
+          </Reveal>
+          <Reveal delay={0.06}>
+            <ActivityMarquee />
+          </Reveal>
+          <div className="mt-10 flex justify-center">
+            <Button href="/activities" variant="outline">
+              前往活動照片牆
+            </Button>
+          </div>
         </div>
       </section>
 

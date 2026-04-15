@@ -89,3 +89,28 @@
       transparent 55%
     );
 }
+
+@keyframes activity-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.activity-marquee-mask {
+  overflow: hidden;
+}
+
+.activity-marquee-track {
+  display: flex;
+  width: max-content;
+  gap: 0.875rem;
+  animation: activity-marquee 36s linear infinite;
+  will-change: transform;
+}
+
+.activity-marquee-mask:hover .activity-marquee-track {
+  animation-play-state: paused;
+}
