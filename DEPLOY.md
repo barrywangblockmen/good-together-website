@@ -41,9 +41,22 @@ npm run build
 | `SUBMISSIONS_FILE` | 表單落地檔案路徑，例如 `/var/www/good-together/data/submissions.jsonl` |
 | `VISIT_NOTIFY_ENABLED` | 選填：`false` 時關閉造訪寄信 |
 
-## 4. Nginx 反向代理（範例）
+## 4. Nginx 反向代理（安全強化範例）
 
 ```nginx
+# /etc/nginx/nginx.conf 內的 http {} 區塊（全站共用）
+server_tokens off;
+
+# 基礎逾時設定：降低慢速連線拖住 worker 的風險
+client_body_timeout 10s;
+client_header_timeout 10s;
+keepalive_timeout 15s;
+send_timeout 10s;
+
+# 連線數與請求速率限制（以 IP 為單位）
+limit_conn_zone $binary_remote_addr zone=perip_conn:10m;
+limit_req_zone $binary_remote_addr zone=perip_req:10m rate=10r/s;
+
 server {
     listen 80;
     server_name www.example.org;
@@ -57,6 +70,16 @@ server {
     ssl_certificate     /etc/letsencrypt/live/www.example.org/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/www.example.org/privkey.pem;
 
+    # 請求大小限制：可阻擋異常大 payload（依需求調整）
+    client_max_body_size 1m;
+
+    # 套用限流與連線限制
+    limit_conn perip_conn 20;
+    limit_req zone=perip_req burst=20 nodelay;
+
+    # 強制瀏覽器長時間使用 HTTPS
+    add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+
     location / {
         proxy_pass http://127.0.0.1:3000;
         proxy_http_version 1.1;
@@ -65,11 +88,18 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
+
+        # 反向代理逾時，避免上游卡住連線
+        proxy_connect_timeout 5s;
+        proxy_send_timeout 30s;
+        proxy_read_timeout 30s;
     }
 }
 ```
 
 TLS 建議使用 **Let’s Encrypt（certbot）**。
+
+> 若目前沒有任何子網域，`Strict-Transport-Security` 使用 `includeSubDomains; preload` 通常可接受；若未來新增子網域且尚未啟用 HTTPS，請先調整此策略再上線。
 
 ## 5. PM2 範例
 
