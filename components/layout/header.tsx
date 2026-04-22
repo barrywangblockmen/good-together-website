@@ -44,7 +44,7 @@ export function Header() {
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <Button href="/join" variant="primary" className="hidden md:inline-flex">
-            加入我們
+            加入連署
           </Button>
           <button
             type="button"
@@ -84,7 +84,7 @@ export function Header() {
               className="mt-2 w-full justify-center"
               onClick={() => setOpen(false)}
             >
-              加入我們
+              加入連署
             </Button>
           </nav>
         </div>

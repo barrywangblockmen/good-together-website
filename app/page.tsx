@@ -162,7 +162,7 @@ export default function HomePage() {
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Button href="/join" variant="primary">
-                填寫加入意向
+                加入連署
               </Button>
               <Button href="/about" variant="outline">
                 認識協會
