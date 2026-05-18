@@ -36,7 +36,10 @@ export default function JoinPage() {
           </div>
 
           <div className="rounded-xl border border-edge bg-page px-4 py-5 md:px-6">
-            <div className="mt-2 grid grid-cols-4 gap-2 md:gap-3">
+            <p className="text-center text-sm leading-relaxed text-muted">
+              創始連署已達標，人民團體籌備申請已送出。若你有意加入協會，歡迎依下列步驟填寫意向表；正式入會條件尚在規劃，我們將於聯繫時為你說明。
+            </p>
+            <div className="mt-4 grid grid-cols-4 gap-2 md:gap-3">
               {steps.map((label, idx) => (
                 <div key={label} className="relative text-center">
                   {idx < steps.length - 1 ? (

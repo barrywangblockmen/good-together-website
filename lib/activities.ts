@@ -1,5 +1,17 @@
 export const ACTIVITY_EVENTS = [
   {
+    title: "台北 ELLE 路跑",
+    date: "2026/05/16",
+    folder: "20260516-taipei-elle-run",
+    description: "在賽道上互相打氣、一起向前，把運動的熱血化為同行力量，讓共好在每一步中延續。",
+  },
+  {
+    title: "白沙屯媽祖繞境",
+    date: "2026/04/17",
+    folder: "20260417-baishatun-mazu-pilgrimage",
+    description: "跟著媽祖的腳步同行，在進香路上彼此打氣，把信仰與人情的溫度帶回日常。",
+  },
+  {
     title: "羽你同行",
     date: "2026/04/01",
     folder: "20260401-badminton",
