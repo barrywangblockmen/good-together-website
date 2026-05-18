@@ -1,13 +1,13 @@
 import { Reveal } from "@/components/motion/reveal";
 import { ContactForm } from "@/components/forms/contact-form";
 import { SectionHeading } from "@/components/ui/section-heading";
-import { SupporterCount } from "@/components/join/supporter-count";
+import { GoalAchieved } from "@/components/join/supporter-count";
 import { createMetadata } from "@/lib/metadata";
 
 export const metadata = createMetadata({
-  title: "加入連署",
+  title: "加入協會",
   description:
-    "填寫加入連署申請並留下聯絡方式，台灣共好交流協會將於數個工作天內以 Email 回覆，與你聊聊下一步。",
+    "填寫加入協會申請並留下聯絡方式，台灣共好交流協會將於數個工作天內以 Email 回覆，與你聊聊下一步。",
   path: "/join",
 });
 
@@ -24,29 +24,15 @@ export default function JoinPage() {
       <Reveal>
         <SectionHeading
           eyebrow="Join"
-          title="加入連署"
-          description="若你認同共好與跨域學習，邀請你留下資料完成加入連署。本站不公開個別聯絡窗口，所有回覆皆由協會以 Email 進行。"
+          title="加入協會"
+          description="若你認同共好與跨域學習，邀請你留下資料申請加入協會。本站不公開個別聯絡窗口，所有回覆皆由協會以 Email 進行。"
         />
       </Reveal>
       <Reveal delay={0.04}>
         <div className="mt-8 space-y-6 rounded-2xl border border-edge bg-surface p-6 shadow-sm md:p-8">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="supporter-count-card flex min-h-[156px] flex-col justify-center rounded-xl border border-primary/40 bg-page p-5 text-center">
-              <p className="text-sm text-muted">目前連署人數</p>
-              <SupporterCount />
-              <p className="mt-1 text-xs text-muted">持續增加中</p>
-            </div>
-            <div className="flex min-h-[156px] flex-col justify-center rounded-xl border border-edge bg-page p-5 text-center">
-              <p className="text-sm text-muted">創始發起人名額</p>
-              <p className="mt-2 text-4xl font-semibold text-primary md:text-5xl">30 位</p>
-              <p className="mt-1 text-xs text-muted">名額有限，現正招募中</p>
-            </div>
-          </div>
-
-          <div className="join-ticket-card mx-auto w-full max-w-md px-6 py-5 text-center">
-            <p className="text-sm font-medium text-muted">入會禮券</p>
-            <p className="mt-1 text-4xl font-semibold tracking-tight text-primary md:text-5xl">$200</p>
-            <p className="mt-1 text-xs text-muted">現在加入即享</p>
+          <div className="goal-achieved-card flex min-h-[156px] flex-col justify-center rounded-xl border border-amber-400/40 bg-page p-5 text-center">
+            <GoalAchieved />
+            <p className="mt-1 text-xs text-muted">感謝每一位支持者</p>
           </div>
 
           <div className="rounded-xl border border-edge bg-page px-4 py-5 md:px-6">

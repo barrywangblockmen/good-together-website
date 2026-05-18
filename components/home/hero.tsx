@@ -32,7 +32,7 @@ export function Hero() {
               認識協會
             </Button>
             <Button href="/join" variant="outline">
-              加入連署
+              加入協會
             </Button>
           </div>
         </div>

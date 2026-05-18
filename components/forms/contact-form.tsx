@@ -11,11 +11,7 @@ const formSchema = z
     name: z.string().trim().min(1, "請填寫姓名").max(80),
     email: z.string().trim().email("請填寫有效 Email"),
     phone: z.string().trim(),
-    message: z
-      .string()
-      .trim()
-      .min(10, "請至少填寫 10 字")
-      .max(2000, "最多 2000 字"),
+    message: z.string().trim().min(1, "請填寫意願說明"),
     consent: z.boolean(),
     website: z.string().optional(),
   })

@@ -10,7 +10,7 @@ export const contactBodySchema = z.object({
     },
     z.union([z.undefined(), z.string().min(8).max(20)])
   ),
-  message: z.string().trim().min(10).max(2000),
+  message: z.string().trim().min(1),
   consent: z.literal(true),
 });
 
