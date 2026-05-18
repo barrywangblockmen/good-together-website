@@ -20,7 +20,7 @@ export async function ActivityMarquee() {
                   fill
                   sizes="224px"
                   className="object-cover"
-                  quality={65}
+                  quality={75}
                 />
               </div>
             ) : (

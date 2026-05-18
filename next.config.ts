@@ -46,6 +46,10 @@ function securityHeaders(): { key: string; value: string }[] {
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  images: {
+    // Next.js 16 only allows listed quality values in /_next/image
+    qualities: [75],
+  },
   async headers() {
     return [
       {

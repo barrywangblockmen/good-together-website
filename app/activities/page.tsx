@@ -63,7 +63,7 @@ export default async function ActivitiesPage() {
                               fill
                               sizes="(min-width: 768px) 25vw, 46vw"
                               className="object-cover"
-                              quality={72}
+                              quality={75}
                             />
                           </div>
                         );
