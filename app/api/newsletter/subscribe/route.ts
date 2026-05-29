@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { NOTIFY_EMAIL } from "@/lib/constants";
+import { getNewsletterTopicLabel } from "@/lib/newsletter-topics";
 import { formatTaipeiTime, sendMail } from "@/lib/mail";
 import { enqueueMail } from "@/lib/mail-queue";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
@@ -14,6 +15,7 @@ const MAX_SUBSCRIBE = 5;
 type UnknownBody = {
   email?: unknown;
   name?: unknown;
+  topics?: unknown;
   consent?: unknown;
   website?: unknown;
 };
@@ -50,6 +52,7 @@ export async function POST(request: Request) {
   const parsed = subscribeBodySchema.safeParse({
     email: json.email,
     name: json.name,
+    topics: json.topics,
     consent: json.consent,
   });
   if (!parsed.success) {
@@ -65,16 +68,19 @@ export async function POST(request: Request) {
   const referrer = (request.headers.get("referer") || "").slice(0, 2048);
 
   let already = false;
+  let addedTopics = data.topics;
   try {
     const result = await appendSubscriber({
       email: data.email,
       name: data.name,
+      topics: data.topics,
       consent: true,
       ip,
       userAgent,
       referrer,
     });
     already = result.already;
+    addedTopics = result.addedTopics;
   } catch {
     return NextResponse.json({ ok: false, error: "SERVER_ERROR" }, { status: 500 });
   }
@@ -83,11 +89,13 @@ export async function POST(request: Request) {
     const notifyTo = process.env.NOTIFY_EMAIL || NOTIFY_EMAIL;
     const from = process.env.FROM_EMAIL;
     if (from) {
+      const topicLabels = data.topics.map((id) => getNewsletterTopicLabel(id)).join("、");
       const html = `
       <h1>新的電子報訂閱</h1>
       <p><strong>時間（台北）</strong>：${formatTaipeiTime()}</p>
       <p><strong>Email</strong>：${escapeHtml(data.email)}</p>
       <p><strong>姓名</strong>：${data.name ? escapeHtml(data.name) : "（未填）"}</p>
+      <p><strong>訂閱主題</strong>：${escapeHtml(topicLabels)}</p>
       `;
       try {
         await enqueueMail(() =>
@@ -105,7 +113,7 @@ export async function POST(request: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true, already });
+  return NextResponse.json({ ok: true, already, addedTopics });
 }
 
 function escapeHtml(s: string) {

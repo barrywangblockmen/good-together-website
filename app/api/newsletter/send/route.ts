@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { sendMail } from "@/lib/mail";
 import { enqueueMail } from "@/lib/mail-queue";
+import { getNewsletterTopicLabel } from "@/lib/newsletter-topics";
 import { sendBodySchema } from "@/lib/schemas/newsletter";
 import { getPublicSiteUrl } from "@/lib/site-url";
-import { listActiveSubscribers } from "@/lib/subscriber-log";
+import { listActiveSubscribersForTopic } from "@/lib/subscriber-log";
 
 export const runtime = "nodejs";
 
@@ -18,13 +19,17 @@ function verifyBearer(request: Request): boolean {
   return match[1] === secret;
 }
 
-function buildUnsubscribeFooter(request: Request, token: string) {
+function buildUnsubscribeFooter(
+  request: Request,
+  token: string,
+  topicLabel: string
+) {
   const url = `${getPublicSiteUrl(request)}/api/newsletter/unsubscribe?token=${encodeURIComponent(token)}`;
   return `
   <hr style="border:none;border-top:1px solid #e5e7eb;margin:32px 0 16px" />
   <p style="font-size:12px;color:#6b7280;line-height:1.6">
-    您收到此信是因為曾訂閱台灣共好交流協會電子報。
-    若不想再收到，請<a href="${url}">按此退訂</a>。
+    您收到此信是因為曾訂閱「${topicLabel}」。
+    若不想再收到此主題，請<a href="${url}">按此退訂</a>（不影響其他主題）。
   </p>`;
 }
 
@@ -52,7 +57,8 @@ export async function POST(request: Request) {
     );
   }
 
-  const { subject, html, dryRun } = parsed.data;
+  const { topic, subject, html, dryRun } = parsed.data;
+  const topicLabel = getNewsletterTopicLabel(topic);
   const from = process.env.FROM_EMAIL;
   if (!from) {
     return NextResponse.json({ ok: false, error: "SERVER_ERROR" }, { status: 500 });
@@ -60,20 +66,20 @@ export async function POST(request: Request) {
 
   let subscribers;
   try {
-    subscribers = await listActiveSubscribers();
+    subscribers = await listActiveSubscribersForTopic(topic);
   } catch {
     return NextResponse.json({ ok: false, error: "SERVER_ERROR" }, { status: 500 });
   }
 
   if (dryRun) {
-    return NextResponse.json({ ok: true, count: subscribers.length });
+    return NextResponse.json({ ok: true, topic, count: subscribers.length });
   }
 
   let sent = 0;
   let failed = 0;
 
   for (const subscriber of subscribers) {
-    const bodyHtml = `${html}${buildUnsubscribeFooter(request, subscriber.unsubscribeToken)}`;
+    const bodyHtml = `${html}${buildUnsubscribeFooter(request, subscriber.unsubscribeToken, topicLabel)}`;
     try {
       await enqueueMail(() =>
         sendMail({
@@ -91,6 +97,7 @@ export async function POST(request: Request) {
 
   return NextResponse.json({
     ok: true,
+    topic,
     sent,
     failed,
     total: subscribers.length,

@@ -31,7 +31,7 @@ export default function PrivacyPage() {
               </li>
               <li>
                 <strong className="text-ink">電子報訂閱表單</strong>
-                ：您主動填寫的 Email 與姓名（選填），用於寄送協會電子報。
+                ：您主動填寫的 Email、姓名（選填）與所選訂閱主題（例如 BTC 日報、活動回顧、課程回顧）。
               </li>
               <li>
                 <strong className="text-ink">網站造訪通知</strong>
@@ -46,7 +46,7 @@ export default function PrivacyPage() {
           <section>
             <h3 className="text-lg font-semibold text-ink">二、利用目的</h3>
             <p className="mt-2 leading-relaxed">
-              表單資料僅作為聯繫、回覆與內部行政作業；電子報訂閱資料用於寄送協會動態與活動消息；造訪紀錄作為資安與流量分析用途。不會於公開頁面展示您的個人資料。電子報每封信件均提供退訂連結，您可隨時停止接收。
+              表單資料僅作為聯繫、回覆與內部行政作業；電子報訂閱資料依您勾選的主題寄送對應內容；造訪紀錄作為資安與流量分析用途。不會於公開頁面展示您的個人資料。每個主題的電子報均提供獨立退訂連結，退訂後僅停止該主題，不影響其他主題。
             </p>
           </section>
         </Reveal>

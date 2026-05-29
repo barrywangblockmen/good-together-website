@@ -161,10 +161,19 @@ tail -n 20 /var/www/good-together/data/subscribers.jsonl
 NEWSLETTER_API_SECRET=your-secret \
 NEWSLETTER_SITE_URL=https://your-domain.org \
 node scripts/send-newsletter.mjs \
-  --subject "GT 共好電子報 #1" \
+  --topic btc-daily \
+  --subject "GT BTC 日報 2026-05-29" \
   --html-file ./draft.html \
   --dry-run
 ```
+
+**主題 id**（`--topic` 必填）：
+
+| id | 說明 |
+|----|------|
+| `btc-daily` | BTC 日報 |
+| `activity-monthly` | 每月活動精彩回顧 |
+| `course-monthly` | 每月課程回顧 |
 
 確認收件數無誤後，移除 `--dry-run` 正式寄送。`NEWSLETTER_API_SECRET` 需與伺服器環境變數一致，且僅保存在伺服器與 Cowork 本機，勿提交至 Git。
 

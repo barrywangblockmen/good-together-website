@@ -3,14 +3,24 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import { NEWSLETTER_TOPICS, type NewsletterTopicId } from "@/lib/newsletter-topics";
+
+const topicIdEnum = z.enum(
+  NEWSLETTER_TOPICS.map((t) => t.id) as [
+    NewsletterTopicId,
+    NewsletterTopicId,
+    NewsletterTopicId,
+  ]
+);
 
 const formSchema = z
   .object({
     email: z.string().trim().email("請填寫有效 Email"),
     name: z.string().trim(),
+    topics: z.array(topicIdEnum),
     consent: z.boolean(),
     website: z.string().optional(),
   })
@@ -20,6 +30,13 @@ const formSchema = z
         code: z.ZodIssueCode.custom,
         message: "請同意隱私權政策",
         path: ["consent"],
+      });
+    }
+    if (data.topics.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "請至少選擇一個主題",
+        path: ["topics"],
       });
     }
     const nameTrim = data.name.trim();
@@ -39,6 +56,72 @@ type NewsletterFormProps = {
   idPrefix?: string;
 };
 
+function TopicCheckboxes({
+  idPrefix,
+  selected,
+  onChange,
+  error,
+  compact,
+}: {
+  idPrefix: string;
+  selected: string[];
+  onChange: (topics: string[]) => void;
+  error?: string;
+  compact?: boolean;
+}) {
+  const toggle = (id: string, checked: boolean) => {
+    if (checked) {
+      onChange([...selected, id]);
+    } else {
+      onChange(selected.filter((t) => t !== id));
+    }
+  };
+
+  return (
+    <fieldset className="space-y-2">
+      <legend
+        className={`mb-2 block font-medium text-ink ${compact ? "text-sm" : "text-sm"}`}
+      >
+        訂閱主題 <span className="text-danger">*</span>
+      </legend>
+      <div className={compact ? "space-y-2" : "space-y-3"}>
+        {NEWSLETTER_TOPICS.map((topic) => {
+          const inputId = `${idPrefix}-topic-${topic.id}`;
+          const checked = selected.includes(topic.id);
+          return (
+            <label
+              key={topic.id}
+              htmlFor={inputId}
+              className={`flex cursor-pointer gap-3 rounded-xl border border-edge bg-page transition has-checked:border-primary/50 has-checked:bg-primary/5 ${compact ? "p-3" : "p-4"}`}
+            >
+              <input
+                id={inputId}
+                type="checkbox"
+                className="mt-1 size-4 shrink-0 rounded border-edge text-primary focus:ring-ring"
+                checked={checked}
+                onChange={(e) => toggle(topic.id, e.target.checked)}
+              />
+              <span className="min-w-0">
+                <span className={`block font-medium text-ink ${compact ? "text-sm" : ""}`}>
+                  {topic.label}
+                </span>
+                {!compact ? (
+                  <span className="mt-0.5 block text-sm text-muted">{topic.description}</span>
+                ) : null}
+              </span>
+            </label>
+          );
+        })}
+      </div>
+      {error ? (
+        <p className="text-sm text-danger" role="alert">
+          {error}
+        </p>
+      ) : null}
+    </fieldset>
+  );
+}
+
 export function NewsletterForm({
   variant = "default",
   idPrefix = "newsletter",
@@ -47,19 +130,23 @@ export function NewsletterForm({
 
   const {
     register,
-    control,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: "",
       name: "",
+      topics: [],
       consent: false,
       website: "",
     },
   });
+
+  const selectedTopics = watch("topics");
 
   const onSubmit = handleSubmit(async (values) => {
     setStatus("idle");
@@ -67,6 +154,7 @@ export function NewsletterForm({
     const body = {
       email: values.email,
       name: nameTrim === "" ? undefined : nameTrim,
+      topics: values.topics,
       consent: true as const,
       website: values.website || "",
     };
@@ -79,7 +167,7 @@ export function NewsletterForm({
 
     if (res.status === 204) {
       setStatus("success");
-      reset({ consent: false });
+      reset({ topics: [], consent: false });
       return;
     }
 
@@ -89,7 +177,7 @@ export function NewsletterForm({
     }
 
     setStatus("success");
-    reset({ consent: false });
+    reset({ topics: [], consent: false });
   });
 
   if (status === "success") {
@@ -101,11 +189,17 @@ export function NewsletterForm({
             : "rounded-2xl border border-edge bg-surface p-6 text-center shadow-sm md:p-8"
         }
       >
-        <p className={variant === "compact" ? "font-medium text-ink" : "text-lg font-semibold text-ink"}>
-          已成功訂閱電子報
+        <p
+          className={
+            variant === "compact" ? "font-medium text-ink" : "text-lg font-semibold text-ink"
+          }
+        >
+          已成功訂閱
         </p>
         {variant === "default" ? (
-          <p className="mt-2 text-sm text-muted">感謝你的支持，我們會將協會動態寄至你的信箱。</p>
+          <p className="mt-2 text-sm text-muted">
+            感謝你的支持，我們會依你選擇的主題寄送電子報。
+          </p>
         ) : null}
       </div>
     );
@@ -127,7 +221,14 @@ export function NewsletterForm({
           {...register("website")}
         />
         <p className="text-sm font-semibold text-ink">訂閱電子報</p>
-        <p className="text-sm text-muted">接收協會活動與共好動態，隨時可退訂。</p>
+        <p className="text-sm text-muted">選擇想接收的主題，隨時可退訂。</p>
+        <TopicCheckboxes
+          idPrefix={idPrefix}
+          selected={selectedTopics}
+          onChange={(topics) => setValue("topics", topics as FormValues["topics"], { shouldValidate: true })}
+          error={errors.topics?.message}
+          compact
+        />
         <div className="flex flex-col gap-2 sm:flex-row">
           <input
             id={emailId}
@@ -148,22 +249,12 @@ export function NewsletterForm({
           </p>
         ) : null}
         <label className="flex items-start gap-2 text-xs text-muted">
-          <Controller
-            name="consent"
-            control={control}
-            render={({ field }) => (
-              <input
-                id={consentId}
-                type="checkbox"
-                className="mt-0.5 size-3.5 rounded border-edge text-primary focus:ring-ring"
-                aria-invalid={errors.consent ? true : undefined}
-                aria-describedby={errors.consent ? `${consentId}-error` : undefined}
-                checked={field.value}
-                onChange={(e) => field.onChange(e.target.checked)}
-                onBlur={field.onBlur}
-                ref={field.ref}
-              />
-            )}
+          <input
+            id={consentId}
+            type="checkbox"
+            className="mt-0.5 size-3.5 rounded border-edge text-primary focus:ring-ring"
+            aria-invalid={errors.consent ? true : undefined}
+            {...register("consent")}
           />
           <span>
             同意{" "}
@@ -173,7 +264,7 @@ export function NewsletterForm({
           </span>
         </label>
         {errors.consent ? (
-          <p id={`${consentId}-error`} className="text-sm text-danger" role="alert">
+          <p className="text-sm text-danger" role="alert">
             {errors.consent.message}
           </p>
         ) : null}
@@ -199,6 +290,13 @@ export function NewsletterForm({
         className="absolute -left-[9999px] h-0 w-0 opacity-0"
         aria-hidden
         {...register("website")}
+      />
+
+      <TopicCheckboxes
+        idPrefix={idPrefix}
+        selected={selectedTopics}
+        onChange={(topics) => setValue("topics", topics as FormValues["topics"], { shouldValidate: true })}
+        error={errors.topics?.message}
       />
 
       <div>
@@ -240,29 +338,20 @@ export function NewsletterForm({
 
       <div>
         <label className="flex items-start gap-3 text-sm text-muted">
-          <Controller
-            name="consent"
-            control={control}
-            render={({ field }) => (
-              <input
-                id={consentId}
-                type="checkbox"
-                className="mt-1 size-4 rounded border-edge text-primary focus:ring-ring"
-                aria-invalid={errors.consent ? true : undefined}
-                aria-describedby={errors.consent ? `${consentId}-error` : undefined}
-                checked={field.value}
-                onChange={(e) => field.onChange(e.target.checked)}
-                onBlur={field.onBlur}
-                ref={field.ref}
-              />
-            )}
+          <input
+            id={consentId}
+            type="checkbox"
+            className="mt-1 size-4 rounded border-edge text-primary focus:ring-ring"
+            aria-invalid={errors.consent ? true : undefined}
+            aria-describedby={errors.consent ? `${consentId}-error` : undefined}
+            {...register("consent")}
           />
           <span>
             我已閱讀並同意{" "}
             <Link className="text-primary underline-offset-2 hover:underline" href="/privacy">
               隱私權政策
             </Link>
-            ，同意協會寄送電子報至我的 Email，並知悉可隨時退訂。
+            ，同意協會依我所選主題寄送電子報，並知悉可隨時退訂各主題。
           </span>
         </label>
         {errors.consent ? (

@@ -2,16 +2,25 @@
 
 import { readFile } from "node:fs/promises";
 
+const VALID_TOPICS = ["btc-daily", "activity-monthly", "course-monthly"];
+
 function usage() {
   console.error(`Usage:
   NEWSLETTER_API_SECRET=xxx node scripts/send-newsletter.mjs \\
     --url https://your-domain.org \\
-    --subject "GT 共好電子報 #1" \\
+    --topic btc-daily \\
+    --subject "GT BTC 日報 2026-05-29" \\
     --html-file ./draft.html \\
     [--dry-run]
 
+Topics:
+  btc-daily           BTC 日報
+  activity-monthly  每月活動精彩回顧
+  course-monthly      每月課程回顧
+
 Options:
   --url         Site base URL (or set NEWSLETTER_SITE_URL)
+  --topic       Newsletter topic id (required)
   --subject     Email subject line
   --html-file   Path to HTML body file
   --dry-run     Count recipients without sending
@@ -22,6 +31,7 @@ Options:
 function parseArgs(argv) {
   const opts = {
     url: process.env.NEWSLETTER_SITE_URL || "",
+    topic: "",
     subject: "",
     htmlFile: "",
     dryRun: false,
@@ -31,6 +41,8 @@ function parseArgs(argv) {
     const arg = argv[i];
     if (arg === "--url") {
       opts.url = argv[++i] || "";
+    } else if (arg === "--topic") {
+      opts.topic = argv[++i] || "";
     } else if (arg === "--subject") {
       opts.subject = argv[++i] || "";
     } else if (arg === "--html-file") {
@@ -48,8 +60,14 @@ function parseArgs(argv) {
 const opts = parseArgs(process.argv.slice(2));
 const secret = process.env.NEWSLETTER_API_SECRET;
 
-if (!secret || !opts.url || !opts.subject || !opts.htmlFile) {
+if (!secret || !opts.url || !opts.topic || !opts.subject || !opts.htmlFile) {
   usage();
+}
+
+if (!VALID_TOPICS.includes(opts.topic)) {
+  console.error(`Invalid topic: ${opts.topic}`);
+  console.error(`Valid topics: ${VALID_TOPICS.join(", ")}`);
+  process.exit(1);
 }
 
 const html = await readFile(opts.htmlFile, "utf8");
@@ -62,6 +80,7 @@ const res = await fetch(endpoint, {
     Authorization: `Bearer ${secret}`,
   },
   body: JSON.stringify({
+    topic: opts.topic,
     subject: opts.subject,
     html,
     dryRun: opts.dryRun,
