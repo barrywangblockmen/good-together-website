@@ -56,7 +56,7 @@ type NewsletterFormProps = {
   idPrefix?: string;
 };
 
-function TopicCheckboxes({
+function TopicToggles({
   idPrefix,
   selected,
   onChange,
@@ -79,12 +79,12 @@ function TopicCheckboxes({
 
   return (
     <fieldset className="space-y-2">
-      <legend
-        className={`mb-2 block font-medium text-ink ${compact ? "text-sm" : "text-sm"}`}
-      >
+      <legend className="mb-2 block text-sm font-medium text-ink">
         訂閱主題 <span className="text-danger">*</span>
       </legend>
-      <div className={compact ? "space-y-2" : "space-y-3"}>
+      <div
+        className={`flex flex-wrap items-center gap-x-5 gap-y-3 ${compact ? "" : "rounded-xl border border-edge bg-page p-4"}`}
+      >
         {NEWSLETTER_TOPICS.map((topic) => {
           const inputId = `${idPrefix}-topic-${topic.id}`;
           const checked = selected.includes(topic.id);
@@ -92,27 +92,37 @@ function TopicCheckboxes({
             <label
               key={topic.id}
               htmlFor={inputId}
-              className={`flex cursor-pointer gap-3 rounded-xl border border-edge bg-page transition has-checked:border-primary/50 has-checked:bg-primary/5 ${compact ? "p-3" : "p-4"}`}
+              className="inline-flex cursor-pointer items-center gap-2.5"
             >
-              <input
-                id={inputId}
-                type="checkbox"
-                className="mt-1 size-4 shrink-0 rounded border-edge text-primary focus:ring-ring"
-                checked={checked}
-                onChange={(e) => toggle(topic.id, e.target.checked)}
-              />
-              <span className="min-w-0">
-                <span className={`block font-medium text-ink ${compact ? "text-sm" : ""}`}>
-                  {topic.label}
-                </span>
-                {!compact ? (
-                  <span className="mt-0.5 block text-sm text-muted">{topic.description}</span>
-                ) : null}
+              <span className="relative inline-flex shrink-0">
+                <input
+                  id={inputId}
+                  type="checkbox"
+                  role="switch"
+                  aria-checked={checked}
+                  className="peer sr-only"
+                  checked={checked}
+                  onChange={(e) => toggle(topic.id, e.target.checked)}
+                />
+                <span
+                  aria-hidden
+                  className="block h-6 w-11 rounded-full border border-edge bg-edge/80 transition-colors peer-checked:border-primary peer-checked:bg-primary peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-page after:absolute after:left-0.5 after:top-0.5 after:size-5 after:rounded-full after:bg-white after:shadow-sm after:transition-transform peer-checked:after:translate-x-5"
+                />
+              </span>
+              <span
+                className={`font-medium text-ink ${compact ? "text-xs sm:text-sm" : "text-sm"}`}
+              >
+                {topic.label}
               </span>
             </label>
           );
         })}
       </div>
+      {!compact ? (
+        <p className="text-xs text-muted">
+          {NEWSLETTER_TOPICS.map((t) => t.description).join(" · ")}
+        </p>
+      ) : null}
       {error ? (
         <p className="text-sm text-danger" role="alert">
           {error}
@@ -222,7 +232,7 @@ export function NewsletterForm({
         />
         <p className="text-sm font-semibold text-ink">訂閱電子報</p>
         <p className="text-sm text-muted">選擇想接收的主題，隨時可退訂。</p>
-        <TopicCheckboxes
+        <TopicToggles
           idPrefix={idPrefix}
           selected={selectedTopics}
           onChange={(topics) => setValue("topics", topics as FormValues["topics"], { shouldValidate: true })}
@@ -292,7 +302,7 @@ export function NewsletterForm({
         {...register("website")}
       />
 
-      <TopicCheckboxes
+      <TopicToggles
         idPrefix={idPrefix}
         selected={selectedTopics}
         onChange={(topics) => setValue("topics", topics as FormValues["topics"], { shouldValidate: true })}

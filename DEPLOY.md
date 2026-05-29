@@ -171,7 +171,7 @@ node scripts/send-newsletter.mjs \
 
 | id | 說明 |
 |----|------|
-| `btc-daily` | BTC 日報 |
+| `btc-daily` | 比特幣行情日報 |
 | `activity-monthly` | 每月活動精彩回顧 |
 | `course-monthly` | 每月課程回顧 |
 

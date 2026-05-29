@@ -1,7 +1,7 @@
 export const NEWSLETTER_TOPICS = [
   {
     id: "btc-daily",
-    label: "BTC 日報",
+    label: "比特幣行情日報",
     description: "每日比特幣市場與趨勢摘要。",
   },
   {
