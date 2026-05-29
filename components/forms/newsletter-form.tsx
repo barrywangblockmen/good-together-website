@@ -56,6 +56,43 @@ type NewsletterFormProps = {
   idPrefix?: string;
 };
 
+const ALL_TOPIC_IDS = NEWSLETTER_TOPICS.map((t) => t.id);
+
+function TopicSwitch({
+  inputId,
+  checked,
+  label,
+  onCheckedChange,
+  labelClassName,
+}: {
+  inputId: string;
+  checked: boolean;
+  label: string;
+  onCheckedChange: (checked: boolean) => void;
+  labelClassName?: string;
+}) {
+  return (
+    <label htmlFor={inputId} className="inline-flex cursor-pointer items-center gap-2.5">
+      <span className="relative inline-flex shrink-0">
+        <input
+          id={inputId}
+          type="checkbox"
+          role="switch"
+          aria-checked={checked}
+          className="peer sr-only"
+          checked={checked}
+          onChange={(e) => onCheckedChange(e.target.checked)}
+        />
+        <span
+          aria-hidden
+          className="block h-6 w-11 rounded-full border border-edge bg-edge/80 transition-colors peer-checked:border-primary peer-checked:bg-primary peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-page after:absolute after:left-0.5 after:top-0.5 after:size-5 after:rounded-full after:bg-white after:shadow-sm after:transition-transform peer-checked:after:translate-x-5"
+        />
+      </span>
+      <span className={labelClassName ?? "text-sm font-medium text-ink"}>{label}</span>
+    </label>
+  );
+}
+
 function TopicToggles({
   idPrefix,
   selected,
@@ -69,6 +106,8 @@ function TopicToggles({
   error?: string;
   compact?: boolean;
 }) {
+  const allSelected = ALL_TOPIC_IDS.every((id) => selected.includes(id));
+
   const toggle = (id: string, checked: boolean) => {
     if (checked) {
       onChange([...selected, id]);
@@ -76,6 +115,8 @@ function TopicToggles({
       onChange(selected.filter((t) => t !== id));
     }
   };
+
+  const labelClass = compact ? "text-xs font-medium text-ink sm:text-sm" : "text-sm font-medium text-ink";
 
   return (
     <fieldset className="space-y-2">
@@ -85,36 +126,27 @@ function TopicToggles({
       <div
         className={`flex flex-wrap items-center gap-x-5 gap-y-3 ${compact ? "" : "rounded-xl border border-edge bg-page p-4"}`}
       >
+        <TopicSwitch
+          inputId={`${idPrefix}-topic-all`}
+          checked={allSelected}
+          label="全選"
+          labelClassName={labelClass}
+          onCheckedChange={(checked) => {
+            onChange(checked ? [...ALL_TOPIC_IDS] : []);
+          }}
+        />
         {NEWSLETTER_TOPICS.map((topic) => {
           const inputId = `${idPrefix}-topic-${topic.id}`;
           const checked = selected.includes(topic.id);
           return (
-            <label
+            <TopicSwitch
               key={topic.id}
-              htmlFor={inputId}
-              className="inline-flex cursor-pointer items-center gap-2.5"
-            >
-              <span className="relative inline-flex shrink-0">
-                <input
-                  id={inputId}
-                  type="checkbox"
-                  role="switch"
-                  aria-checked={checked}
-                  className="peer sr-only"
-                  checked={checked}
-                  onChange={(e) => toggle(topic.id, e.target.checked)}
-                />
-                <span
-                  aria-hidden
-                  className="block h-6 w-11 rounded-full border border-edge bg-edge/80 transition-colors peer-checked:border-primary peer-checked:bg-primary peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-page after:absolute after:left-0.5 after:top-0.5 after:size-5 after:rounded-full after:bg-white after:shadow-sm after:transition-transform peer-checked:after:translate-x-5"
-                />
-              </span>
-              <span
-                className={`font-medium text-ink ${compact ? "text-xs sm:text-sm" : "text-sm"}`}
-              >
-                {topic.label}
-              </span>
-            </label>
+              inputId={inputId}
+              checked={checked}
+              label={topic.label}
+              labelClassName={labelClass}
+              onCheckedChange={(on) => toggle(topic.id, on)}
+            />
           );
         })}
       </div>
