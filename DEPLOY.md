@@ -39,6 +39,8 @@ npm run build
 | `FROM_EMAIL` | 已在 Resend 驗證網域之寄件地址 |
 | `NOTIFY_EMAIL` | 通知收件信箱（預設可為 `barrywang.blockmen@gmail.com`） |
 | `SUBMISSIONS_FILE` | 表單落地檔案路徑，例如 `/var/www/good-together/data/submissions.jsonl` |
+| `SUBSCRIBERS_FILE` | 電子報訂閱名單路徑，例如 `/var/www/good-together/data/subscribers.jsonl` |
+| `NEWSLETTER_API_SECRET` | 電子報群發 API 的 Bearer token（供 Cowork 或本機腳本呼叫） |
 | `VISIT_NOTIFY_ENABLED` | 選填：`false` 時關閉造訪寄信 |
 
 ## 4. Nginx 反向代理（安全強化範例）
@@ -132,6 +134,38 @@ sudo chown -R ubuntu:ubuntu /var/www/good-together/data
 ```bash
 tail -n 20 /var/www/good-together/data/submissions.jsonl
 ```
+
+## 7.1 電子報訂閱名單
+
+`POST /api/newsletter/subscribe` 會將訂閱者寫入 `SUBSCRIBERS_FILE`（JSONL，一行一筆）。
+
+建議與表單資料共用同一資料夾：
+
+```bash
+sudo mkdir -p /var/www/good-together/data
+sudo chown -R ubuntu:ubuntu /var/www/good-together/data
+```
+
+查看最新訂閱者：
+
+```bash
+tail -n 20 /var/www/good-together/data/subscribers.jsonl
+```
+
+## 7.2 Cowork 群發電子報
+
+本地 Claude Cowork 生成 HTML 後，可透過腳本呼叫受保護的 Send API：
+
+```bash
+NEWSLETTER_API_SECRET=your-secret \
+NEWSLETTER_SITE_URL=https://your-domain.org \
+node scripts/send-newsletter.mjs \
+  --subject "GT 共好電子報 #1" \
+  --html-file ./draft.html \
+  --dry-run
+```
+
+確認收件數無誤後，移除 `--dry-run` 正式寄送。`NEWSLETTER_API_SECRET` 需與伺服器環境變數一致，且僅保存在伺服器與 Cowork 本機，勿提交至 Git。
 
 ## 8. 寄件網域
 

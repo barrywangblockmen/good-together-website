@@ -30,6 +30,10 @@ export default function PrivacyPage() {
                 ：您主動填寫的姓名、Email、電話（選填）與意願說明。
               </li>
               <li>
+                <strong className="text-ink">電子報訂閱表單</strong>
+                ：您主動填寫的 Email 與姓名（選填），用於寄送協會電子報。
+              </li>
+              <li>
                 <strong className="text-ink">網站造訪通知</strong>
                 ：為資安維護與服務品質優化（含流量統計分析）之目的，系統可能記錄頁面路徑、來源網址、
                 瀏覽器類型、時間戳與來源 IP 等必要技術資料。
@@ -42,7 +46,7 @@ export default function PrivacyPage() {
           <section>
             <h3 className="text-lg font-semibold text-ink">二、利用目的</h3>
             <p className="mt-2 leading-relaxed">
-              表單資料僅作為聯繫、回覆與內部行政作業；造訪紀錄作為資安與流量分析用途。不會於公開頁面展示您的個人資料。
+              表單資料僅作為聯繫、回覆與內部行政作業；電子報訂閱資料用於寄送協會動態與活動消息；造訪紀錄作為資安與流量分析用途。不會於公開頁面展示您的個人資料。電子報每封信件均提供退訂連結，您可隨時停止接收。
             </p>
           </section>
         </Reveal>
@@ -51,7 +55,7 @@ export default function PrivacyPage() {
           <section>
             <h3 className="text-lg font-semibold text-ink">三、保存期間與第三方</h3>
             <p className="mt-2 leading-relaxed">
-              資料可能透過電子郵件服務商（例如 Resend）寄送至協會指定信箱，並受該服務商政策與紀錄機制約束。若未另行建檔，本網站第一版不建置會員資料庫；實際保存以協會內部作業為準。
+              資料可能透過電子郵件服務商（例如 Resend）寄送至協會指定信箱或訂閱者信箱，並受該服務商政策與紀錄機制約束。電子報訂閱名單以伺服器落地檔案保存；退訂後將不再寄送。若未另行建檔，本網站第一版不建置會員資料庫；實際保存以協會內部作業為準。
             </p>
           </section>
         </Reveal>
@@ -71,7 +75,7 @@ export default function PrivacyPage() {
             <p className="mt-2 leading-relaxed">
               本政策可能隨網站功能調整而更新，修訂後將公告於本頁並以更新日期標示。
             </p>
-            <p className="mt-4 text-sm text-muted">最近更新：2026 年 4 月</p>
+            <p className="mt-4 text-sm text-muted">最近更新：2026 年 5 月</p>
           </section>
         </Reveal>
       </div>

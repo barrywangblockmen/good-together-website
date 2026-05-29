@@ -1,5 +1,6 @@
 import { Reveal } from "@/components/motion/reveal";
 import { ContactForm } from "@/components/forms/contact-form";
+import { NewsletterForm } from "@/components/forms/newsletter-form";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { GoalAchieved } from "@/components/join/supporter-count";
 import { createMetadata } from "@/lib/metadata";
@@ -65,7 +66,21 @@ export default function JoinPage() {
           <ContactForm />
         </Reveal>
       </div>
-      <Reveal delay={0.08}>
+      <div className="mt-10">
+        <Reveal delay={0.07}>
+          <SectionHeading
+            eyebrow="Newsletter"
+            title="訂閱電子報"
+            description="若你尚未準備加入協會，也歡迎先訂閱電子報，接收活動消息與共好動態。"
+          />
+        </Reveal>
+        <div className="mt-6">
+          <Reveal delay={0.08}>
+            <NewsletterForm idPrefix="join-newsletter" />
+          </Reveal>
+        </div>
+      </div>
+      <Reveal delay={0.09}>
         <div className="mt-6 rounded-xl border border-primary/40 bg-primary/5 p-4">
           <p className="text-sm font-semibold text-primary">身分證資料蒐集說明</p>
           <p className="mt-2 text-sm leading-relaxed text-muted">
