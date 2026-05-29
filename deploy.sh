@@ -35,6 +35,7 @@ rsync -az --delete \
   --exclude ".next/" \
   --exclude "node_modules/" \
   --exclude ".env.local" \
+  --exclude ".env.production" \
   --exclude "*.pem" \
   -e "ssh -i \"$SSH_KEY_PATH\"" \
   "./" "${SSH_USER}@${SSH_HOST}:${REMOTE_APP_DIR}/"
