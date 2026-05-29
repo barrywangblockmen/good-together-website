@@ -2,13 +2,10 @@ import { NextResponse } from "next/server";
 import { sendMail } from "@/lib/mail";
 import { enqueueMail } from "@/lib/mail-queue";
 import { sendBodySchema } from "@/lib/schemas/newsletter";
+import { getPublicSiteUrl } from "@/lib/site-url";
 import { listActiveSubscribers } from "@/lib/subscriber-log";
 
 export const runtime = "nodejs";
-
-function getSiteUrl() {
-  return process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-}
 
 function verifyBearer(request: Request): boolean {
   const secret = process.env.NEWSLETTER_API_SECRET;
@@ -21,8 +18,8 @@ function verifyBearer(request: Request): boolean {
   return match[1] === secret;
 }
 
-function buildUnsubscribeFooter(token: string) {
-  const url = `${getSiteUrl()}/api/newsletter/unsubscribe?token=${encodeURIComponent(token)}`;
+function buildUnsubscribeFooter(request: Request, token: string) {
+  const url = `${getPublicSiteUrl(request)}/api/newsletter/unsubscribe?token=${encodeURIComponent(token)}`;
   return `
   <hr style="border:none;border-top:1px solid #e5e7eb;margin:32px 0 16px" />
   <p style="font-size:12px;color:#6b7280;line-height:1.6">
@@ -76,7 +73,7 @@ export async function POST(request: Request) {
   let failed = 0;
 
   for (const subscriber of subscribers) {
-    const bodyHtml = `${html}${buildUnsubscribeFooter(subscriber.unsubscribeToken)}`;
+    const bodyHtml = `${html}${buildUnsubscribeFooter(request, subscriber.unsubscribeToken)}`;
     try {
       await enqueueMail(() =>
         sendMail({

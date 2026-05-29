@@ -32,7 +32,8 @@ npm run build
 |------|------|
 | `NODE_ENV` | `production` |
 | `PORT` | 內部監聽埠，例如 `3000` |
-| `NEXT_PUBLIC_SITE_URL` | 正式網址，例如 `https://www.example.org` |
+| `NEXT_PUBLIC_SITE_URL` | 正式網址，例如 `https://www.example.org`（建置時寫入 OG/sitemap 等） |
+| `SITE_URL` | 與上相同，供伺服器執行期使用（電子報退訂連結等；建議與 `NEXT_PUBLIC_SITE_URL` 一致） |
 | `RESEND_API_KEY` | Resend API Key |
 | `SMTP_HOST` / `SMTP_PORT` / `SMTP_SECURE` | SMTP 伺服器設定（Gmail: `smtp.gmail.com` / `465` / `true`） |
 | `SMTP_USER` / `SMTP_PASS` | SMTP 帳密（Gmail 建議使用 App Password） |
