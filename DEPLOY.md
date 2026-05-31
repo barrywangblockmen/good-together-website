@@ -34,10 +34,11 @@ npm run build
 | `PORT` | 內部監聽埠，例如 `3000` |
 | `NEXT_PUBLIC_SITE_URL` | 正式網址，例如 `https://www.example.org`（建置時寫入 OG/sitemap 等） |
 | `SITE_URL` | 與上相同，供伺服器執行期使用（電子報退訂連結等；建議與 `NEXT_PUBLIC_SITE_URL` 一致） |
-| `RESEND_API_KEY` | Resend API Key |
-| `SMTP_HOST` / `SMTP_PORT` / `SMTP_SECURE` | SMTP 伺服器設定（Gmail: `smtp.gmail.com` / `465` / `true`） |
-| `SMTP_USER` / `SMTP_PASS` | SMTP 帳密（Gmail 建議使用 App Password） |
-| `FROM_EMAIL` | 已在 Resend 驗證網域之寄件地址 |
+| `RESEND_API_KEY` | Resend API Key（正式站 `@gtclub.tw` 寄信必備） |
+| `MAIL_PROVIDER` | 選填：`resend` 強制 Resend；`smtp` 強制 SMTP；未設時 `@gtclub.tw` 寄件人自動走 Resend |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_SECURE` | SMTP 伺服器設定（本機開發用；正式站 `@gtclub.tw` 請改用 Resend） |
+| `SMTP_USER` / `SMTP_PASS` | SMTP 帳密 |
+| `FROM_EMAIL` | 寄件地址，正式站建議 `台灣共好交流協會 <newsletter@gtclub.tw>` |
 | `NOTIFY_EMAIL` | 通知收件信箱（預設可為 `barrywang.blockmen@gmail.com`） |
 | `SUBMISSIONS_FILE` | 表單落地檔案路徑，例如 `/var/www/good-together/data/submissions.jsonl` |
 | `SUBSCRIBERS_FILE` | 電子報訂閱名單路徑，例如 `/var/www/good-together/data/subscribers.jsonl` |
@@ -179,9 +180,17 @@ node scripts/send-newsletter.mjs \
 
 ## 8. 寄件網域
 
-`FROM_EMAIL` 必須使用已在 **Resend**（或其他 ESP）完成 **DNS 驗證** 的網域，與網站託管於 EC2 或他處無關。
+`FROM_EMAIL` 必須使用已在 **Resend** 完成 **DNS 驗證** 的網域（例如 `newsletter@gtclub.tw`）。
 
-若已設定 `SMTP_HOST`、`SMTP_USER`、`SMTP_PASS`，系統會優先以 SMTP（例如 Gmail）寄送，不受 Resend 網域驗證限制。
+正式站建議：
+
+```bash
+MAIL_PROVIDER=resend
+RESEND_API_KEY=re_xxxx
+FROM_EMAIL=台灣共好交流協會 <newsletter@gtclub.tw>
+```
+
+若已設定 `SMTP_*`，本機開發仍可用 Gmail；但 `@gtclub.tw` 寄件人會自動改走 Resend（需有 `RESEND_API_KEY`）。
 
 ## 9. Standalone 建置後必做：複製靜態資源
 

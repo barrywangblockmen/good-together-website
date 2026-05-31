@@ -36,8 +36,32 @@ function getSmtpTransporter() {
   });
 }
 
+function shouldUseResend(from: string): boolean {
+  const provider = process.env.MAIL_PROVIDER?.toLowerCase();
+  if (provider === "resend") return true;
+  if (provider === "smtp") return false;
+  // Verified-domain senders (e.g. newsletter@gtclub.tw) must use Resend, not Gmail SMTP.
+  return /@gtclub\.tw>\s*$|@gtclub\.tw$/i.test(from);
+}
+
 export async function sendMail(input: SendMailInput): Promise<void> {
+  const resend = getResend();
   const smtp = getSmtpTransporter();
+
+  if (shouldUseResend(input.from) && resend) {
+    const { data, error } = await resend.emails.send({
+      from: input.from,
+      to: input.to,
+      subject: input.subject,
+      html: input.html,
+      replyTo: input.replyTo,
+    });
+    if (error || !data) {
+      throw new Error(error.message || "Resend error");
+    }
+    return;
+  }
+
   if (smtp) {
     await smtp.sendMail({
       from: input.from,
@@ -49,20 +73,21 @@ export async function sendMail(input: SendMailInput): Promise<void> {
     return;
   }
 
-  const resend = getResend();
-  if (!resend) {
-    throw new Error("SMTP and RESEND are both not configured");
+  if (resend) {
+    const { data, error } = await resend.emails.send({
+      from: input.from,
+      to: input.to,
+      subject: input.subject,
+      html: input.html,
+      replyTo: input.replyTo,
+    });
+    if (error || !data) {
+      throw new Error(error.message || "Resend error");
+    }
+    return;
   }
-  const { data, error } = await resend.emails.send({
-    from: input.from,
-    to: input.to,
-    subject: input.subject,
-    html: input.html,
-    replyTo: input.replyTo,
-  });
-  if (error || !data) {
-    throw new Error(error.message || "Resend error");
-  }
+
+  throw new Error("SMTP and RESEND are both not configured");
 }
 
 export function formatTaipeiTime(date = new Date()) {
