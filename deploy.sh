@@ -50,6 +50,12 @@ ssh -i "$SSH_KEY_PATH" "${SSH_USER}@${SSH_HOST}" "
   rm -rf .next/standalone/.next/static .next/standalone/public
   cp -r .next/static .next/standalone/.next/static
   cp -r public .next/standalone/public
+  if [[ -f .env.production ]]; then
+    set -a
+    # shellcheck disable=SC1091
+    source .env.production
+    set +a
+  fi
   if pm2 describe \"$PM2_APP_NAME\" >/dev/null 2>&1; then
     pm2 restart \"$PM2_APP_NAME\" --update-env
   else
