@@ -2,7 +2,13 @@
 
 import { readFile } from "node:fs/promises";
 
-const VALID_TOPICS = ["btc-daily", "activity-monthly", "course-monthly"];
+const VALID_TOPICS = [
+  "btc-daily",
+  "crypto-weekly",
+  "activity-monthly",
+  "course-monthly",
+  "tw-stock-weekly",
+];
 
 function usage() {
   console.error(`Usage:
@@ -15,8 +21,10 @@ function usage() {
 
 Topics:
   btc-daily           比特幣行情日報
-  activity-monthly  每月活動精彩回顧
+  crypto-weekly       加密社群週報
+  activity-monthly    每月活動精彩回顧
   course-monthly      每月課程回顧
+  tw-stock-weekly     台股社群週報
 
 Options:
   --url         Site base URL (or set NEWSLETTER_SITE_URL)

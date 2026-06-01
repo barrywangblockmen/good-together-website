@@ -5,6 +5,11 @@ export const NEWSLETTER_TOPICS = [
     description: "每日比特幣市場與趨勢摘要。",
   },
   {
+    id: "crypto-weekly",
+    label: "加密社群週報",
+    description: "每週加密市場、社群與趨勢重點整理。",
+  },
+  {
     id: "activity-monthly",
     label: "每月活動精彩回顧",
     description: "協會近期活動照片與重點整理。",
@@ -13,6 +18,11 @@ export const NEWSLETTER_TOPICS = [
     id: "course-monthly",
     label: "每月課程回顧",
     description: "主題課程與學習重點回顧。",
+  },
+  {
+    id: "tw-stock-weekly",
+    label: "台股社群週報",
+    description: "每週台股社群觀點與市場焦點回顧。",
   },
 ] as const;
 

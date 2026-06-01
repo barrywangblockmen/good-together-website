@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import {
+  NEWSLETTER_TOPICS,
   isNewsletterTopicId,
   type NewsletterTopicId,
 } from "@/lib/newsletter-topics";
@@ -83,7 +84,7 @@ function migrateLegacyRecord(raw: LegacySubscriberRecord): SubscriberRecord {
   };
 
   const topics: Record<string, TopicSubscription> = {};
-  for (const id of ["btc-daily", "activity-monthly", "course-monthly"] as const) {
+  for (const id of NEWSLETTER_TOPICS.map((topic) => topic.id)) {
     topics[id] = { ...topicEntry };
   }
 

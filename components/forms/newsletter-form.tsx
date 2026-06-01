@@ -11,8 +11,7 @@ import { NEWSLETTER_TOPICS, type NewsletterTopicId } from "@/lib/newsletter-topi
 const topicIdEnum = z.enum(
   NEWSLETTER_TOPICS.map((t) => t.id) as [
     NewsletterTopicId,
-    NewsletterTopicId,
-    NewsletterTopicId,
+    ...NewsletterTopicId[],
   ]
 );
 
