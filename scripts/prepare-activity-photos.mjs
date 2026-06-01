@@ -43,9 +43,32 @@ async function optimizeOne(inputPath, outputPath) {
   ]);
 }
 
-async function processFolder(folderName, cleanup) {
+async function recompressIndexed(folderPath, folderName) {
+  const names = await readdir(folderPath);
+  const indexed = names.filter((name) => isIndexedJpg(name)).sort();
+  let processed = 0;
+
+  for (const file of indexed) {
+    const sourcePath = path.join(folderPath, file);
+    const tmpOutput = path.join(tempDir, `${folderName}-${file}`);
+    await optimizeOne(sourcePath, tmpOutput);
+    await rm(sourcePath, { force: true });
+    await rename(tmpOutput, sourcePath);
+    processed += 1;
+  }
+
+  return processed;
+}
+
+async function processFolder(folderName, cleanup, recompress) {
   const folderPath = path.join(activitiesDir, folderName);
   const names = await readdir(folderPath);
+
+  if (recompress) {
+    const processed = await recompressIndexed(folderPath, folderName);
+    return { folderName, processed };
+  }
+
   const occupiedSlots = new Set(
     names
       .map((name) => getIndexedSlot(name))
@@ -80,6 +103,7 @@ async function processFolder(folderName, cleanup) {
 
 async function main() {
   const cleanup = process.argv.includes("--cleanup");
+  const recompress = process.argv.includes("--recompress");
   await mkdir(tempDir, { recursive: true });
 
   const entries = await readdir(activitiesDir, { withFileTypes: true });
@@ -90,7 +114,7 @@ async function main() {
 
   const results = [];
   for (const folder of folders) {
-    const result = await processFolder(folder, cleanup);
+    const result = await processFolder(folder, cleanup, recompress);
     results.push(result);
   }
 
@@ -98,10 +122,17 @@ async function main() {
 
   console.log("\nPhoto preparation finished:");
   for (const item of results) {
-    console.log(`- ${item.folderName}: ${item.processed} file(s) -> 01~04.jpg`);
+    if (recompress) {
+      console.log(`- ${item.folderName}: recompressed ${item.processed} file(s)`);
+    } else {
+      console.log(`- ${item.folderName}: ${item.processed} file(s) -> 01~04.jpg`);
+    }
   }
   if (cleanup) {
     console.log("- cleanup: original source files removed after conversion");
+  }
+  if (recompress) {
+    console.log("- recompress: existing 01~04.jpg re-optimized in place");
   }
 }
 

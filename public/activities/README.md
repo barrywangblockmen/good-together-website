@@ -26,3 +26,7 @@
 若要在轉檔後刪除原始檔，可執行：
 
 - `npm run photos:prepare -- --cleanup`
+
+若已存在 `01.jpg` ~ `04.jpg` 但檔案過大或顯示異常，可重新壓縮：
+
+- `npm run photos:prepare -- --recompress`

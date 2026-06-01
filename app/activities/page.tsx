@@ -1,5 +1,5 @@
+import { ActivityPhoto } from "@/components/activity-photo";
 import { Reveal } from "@/components/motion/reveal";
-import Image from "next/image";
 import { ACTIVITY_EVENTS, ACTIVITY_PHOTO_COUNT } from "@/lib/activities";
 import { getActivityPhotoMap } from "@/lib/activity-photos";
 import { createMetadata } from "@/lib/metadata";
@@ -57,13 +57,10 @@ export default async function ActivitiesPage() {
                             key={`${activity.folder}-photo-${photoIndex + 1}`}
                             className="relative aspect-[4/3] overflow-hidden rounded-xl border border-edge"
                           >
-                            <Image
+                            <ActivityPhoto
                               src={slot.src}
                               alt={alt}
-                              fill
                               sizes="(min-width: 768px) 25vw, 46vw"
-                              className="object-cover"
-                              quality={75}
                             />
                           </div>
                         );

@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { ActivityPhoto } from "@/components/activity-photo";
 import { getMarqueeItems } from "@/lib/activity-photos";
 
 export async function ActivityMarquee() {
@@ -14,13 +14,10 @@ export async function ActivityMarquee() {
           >
             {photo.src ? (
               <div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-edge">
-                <Image
+                <ActivityPhoto
                   src={photo.src}
                   alt={`${photo.title} ${photo.label}`}
-                  fill
                   sizes="224px"
-                  className="object-cover"
-                  quality={75}
                 />
               </div>
             ) : (
