@@ -132,6 +132,11 @@ SSH_KEY_PATH=... SSH_USER=ubuntu SSH_HOST=... REMOTE_APP_DIR=/var/www/good-toget
 - 修正 PM2 環境變數載入問題（更新 `.env.production` 後需 `--update-env`）
 - 完成網域 HTTPS 化（`gtclub.tw` / `www.gtclub.tw`）與 HTTP 自動轉址
 - 補上 standalone 靜態資源複製流程，避免 `.next/static` 缺失造成 404/502
+- **活動照片牆間歇性破圖／灰色「活動照片」占位**（2026-06-01）：
+  - 非缺檔：伺服器上 `01.jpg`～`04.jpg` 存在且 `curl` 可 200
+  - 曾因 Next.js 16 `/_next/image` 不支援的 `quality` 回 400 → 改為 `quality={75}` 並寫入 `next.config.ts` `images.qualities`
+  - 曾因一次載入多張走 `/_next/image` 即時壓縮不穩定 → `ActivityPhoto` 改直接讀 `/activities/...`（靜態 JPEG）
+  - 曾因 Nginx 全站 `limit_req`（10r/s）導致並行載圖 **503**，前端 `onError` 顯示占位 → `/activities/` 改 Nginx `alias` 靜態檔，限流僅套在 `location /`（詳見 [DEPLOY.md §9.1](./DEPLOY.md#91-活動照片牆activities常見問題)）
 
 ## 維運建議
 
@@ -144,6 +149,7 @@ SSH_KEY_PATH=... SSH_USER=ubuntu SSH_HOST=... REMOTE_APP_DIR=/var/www/good-toget
   - SMTP 帳密與 App Password 格式
   - PM2 實際載入的 env
   - `/api/contact` 回應是否為 `{"ok":true}`
+- 若活動照片牆出現灰色「活動照片」占位：先確認是否 503 限流（見 [DEPLOY.md §9.1](./DEPLOY.md#91-活動照片牆activities常見問題)），再上傳／執行 `npm run photos:prepare`
 
 ## 授權與用途
 

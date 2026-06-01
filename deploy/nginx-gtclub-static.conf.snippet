@@ -1,0 +1,21 @@
+# gtclub.tw 正式站：活動照片靜態檔（請放在 HTTPS server {} 內、location / 之前）
+#
+# 背景：活動頁一次載入約 36 張圖。若全走 proxy + limit_req/limit_conn，
+# 並行請求會收到 503，前端 ActivityPhoto 的 onError 會顯示「活動照片」占位。
+#
+# limit_req / limit_conn 請只放在 location /（API 與 Next），不要放在 server 層，
+# 以免連靜態圖也被限流。
+
+location ^~ /activities/ {
+    alias /var/www/good-together/public/activities/;
+    access_log off;
+    expires 7d;
+    add_header Cache-Control "public, max-age=604800";
+}
+
+location / {
+    limit_conn perip_conn 20;
+    limit_req zone=perip_req burst=20 nodelay;
+    proxy_pass http://127.0.0.1:3000;
+    # ...其餘 proxy_set_header、timeout 同 DEPLOY.md
+}

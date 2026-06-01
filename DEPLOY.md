@@ -77,14 +77,20 @@ server {
     # 請求大小限制：可阻擋異常大 payload（依需求調整）
     client_max_body_size 1m;
 
-    # 套用限流與連線限制
-    limit_conn perip_conn 20;
-    limit_req zone=perip_req burst=20 nodelay;
-
     # 強制瀏覽器長時間使用 HTTPS
     add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
 
+    # 活動照片牆一次會載入多張圖，由 Nginx 直接提供靜態檔（不經 limit_req）
+    location ^~ /activities/ {
+        alias /var/www/good-together/public/activities/;
+        access_log off;
+        expires 7d;
+        add_header Cache-Control "public, max-age=604800";
+    }
+
     location / {
+        limit_conn perip_conn 20;
+        limit_req zone=perip_req burst=20 nodelay;
         proxy_pass http://127.0.0.1:3000;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
@@ -207,6 +213,53 @@ cp -r public .next/standalone/public
 ```
 
 接著再 `pm2 restart gt-site --update-env`（建議先 `set -a; source .env.production; set +a` 再重啟，確保環境變數載入）。
+
+## 9.1 活動照片牆（`/activities`）常見問題
+
+### 症狀
+
+- 部分格子顯示灰色「活動照片」占位（不是瀏覽器預設破圖 icon）
+- 常見於同一活動的下方兩格，或整張活動卡四格皆空
+- 直接開圖片網址有時仍為 HTTP 200
+
+### 原因（依發生順序排查）
+
+| 原因 | 說明 | 處理方式 |
+|------|------|----------|
+| 檔案未上傳 | `public/activities/<活動資料夾>/` 缺少 `01.jpg`～`04.jpg` | 依 `public/activities/README.md` 放置後執行 `npm run photos:prepare` |
+| Next.js 圖片品質 | Next.js 16 的 `/_next/image` 只接受 `next.config.ts` 內 `images.qualities` 列出的值（目前為 `75`），其他值會 **400** | 元件使用 `quality={75}`，勿自訂 72、65 等 |
+| `/_next/image` 並行逾時 | 活動頁一次載入約 36 張，即時壓縮易造成間歇失敗 | 活動圖改 **直接讀** `/activities/.../*.jpg`（`ActivityPhoto` 元件，`unoptimized` / 原生 `<img>`） |
+| **Nginx 限流 503** | 全站 `limit_req`（10r/s）套在 `location /` 時，大量圖片請求經 Node 轉發會被 **503**；前端 `onError` 會顯示占位 | 見下方 Nginx 設定：`/activities/` 由 Nginx **alias 靜態檔**，且 **`limit_req` / `limit_conn` 只放在 `location /`** |
+
+正式站 `gtclub.tw`（2026-06-01）已套用：`location ^~ /activities/` + 限流僅限 API 代理。範例片段見 [`deploy/nginx-gtclub-static.conf.snippet`](./deploy/nginx-gtclub-static.conf.snippet)。
+
+### 上傳與壓縮流程
+
+```bash
+# 新照片：任意檔名放入各活動資料夾後
+npm run photos:prepare
+
+# 刪除轉檔前的原始檔
+npm run photos:prepare -- --cleanup
+
+# 已有 01~04.jpg 需重新壓縮（過大或異常）
+npm run photos:prepare -- --recompress
+```
+
+建議檔名：`01.jpg`～`04.jpg`（`photos:prepare` 會壓成最長邊 1800px、JPEG quality 75）。
+
+### 部署後檢查
+
+```bash
+# 單張應為 200，且由 nginx 直接回傳（有 Cache-Control / expires）
+curl -sI https://gtclub.tw/activities/20260312-chiayi-lantern/01.jpg
+
+# 並行多張不應出現 503（修正限流後）
+for i in $(seq 1 20); do curl -sL -o /dev/null -w "%{http_code} " \
+  "https://gtclub.tw/activities/20260312-chiayi-lantern/01.jpg" & done; wait; echo
+```
+
+若占位仍出現：硬重新整理（Cmd+Shift+R），確認 `public/activities` 已複製到 standalone（見上一節 §9）。
 
 ## 10. HTTPS（Let’s Encrypt + Certbot + Nginx）
 

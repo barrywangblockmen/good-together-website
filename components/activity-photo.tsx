@@ -1,7 +1,6 @@
 "use client";
 
-import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type ActivityPhotoProps = {
   src: string;
@@ -10,8 +9,16 @@ type ActivityPhotoProps = {
   className?: string;
 };
 
-export function ActivityPhoto({ src, alt, sizes, className }: ActivityPhotoProps) {
+const MAX_RETRIES = 3;
+
+export function ActivityPhoto({ src, alt, className }: ActivityPhotoProps) {
+  const [attempt, setAttempt] = useState(0);
   const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    setAttempt(0);
+    setFailed(false);
+  }, [src]);
 
   if (failed) {
     return (
@@ -21,18 +28,24 @@ export function ActivityPhoto({ src, alt, sizes, className }: ActivityPhotoProps
     );
   }
 
+  const cacheBust = attempt > 0 ? `${src}${src.includes("?") ? "&" : "?"}r=${attempt}` : src;
+
   return (
-    <Image
-      src={src}
+    // eslint-disable-next-line @next/next/no-img-element -- static public JPEGs; native img avoids optimizer and supports retry on 503
+    <img
+      key={cacheBust}
+      src={cacheBust}
       alt={alt}
-      fill
-      sizes={sizes}
-      className={className ?? "object-cover"}
-      // Static JPEGs under public/activities are pre-compressed via photos:prepare.
-      // Skip /_next/image to avoid intermittent optimizer timeouts on many parallel requests.
-      unoptimized
       loading="lazy"
-      onError={() => setFailed(true)}
+      decoding="async"
+      className={className ?? "absolute inset-0 h-full w-full object-cover"}
+      onError={() => {
+        if (attempt < MAX_RETRIES) {
+          window.setTimeout(() => setAttempt((value) => value + 1), 250 * (attempt + 1));
+          return;
+        }
+        setFailed(true);
+      }}
     />
   );
 }
