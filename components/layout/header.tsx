@@ -35,7 +35,11 @@ export function Header() {
             <Link
               key={item.href}
               href={item.href}
-              className="rounded-full px-3 py-2 text-sm text-muted transition hover:bg-surface-elevated hover:text-ink"
+              className={
+                item.highlight
+                  ? "rounded-full bg-gradient-to-r from-rose-500 to-amber-500 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-110 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-page"
+                  : "rounded-full px-3 py-2 text-sm text-muted transition hover:bg-surface-elevated hover:text-ink"
+              }
             >
               {item.label}
             </Link>
@@ -72,7 +76,11 @@ export function Header() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="rounded-xl px-3 py-3 text-base text-ink hover:bg-surface-elevated"
+                className={
+                  item.highlight
+                    ? "rounded-xl bg-gradient-to-r from-rose-500 to-amber-500 px-3 py-3 text-base font-semibold text-white shadow-sm"
+                    : "rounded-xl px-3 py-3 text-base text-ink hover:bg-surface-elevated"
+                }
                 onClick={() => setOpen(false)}
               >
                 {item.label}

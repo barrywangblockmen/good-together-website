@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Reveal } from "@/components/motion/reveal";
 import { createMetadata } from "@/lib/metadata";
 
@@ -48,6 +49,36 @@ export default function WorksPage() {
 
       <section className="border-t border-edge bg-surface">
         <div className="mx-auto max-w-6xl px-4 py-14 md:px-6 md:py-20">
+          <Reveal>
+            <Link
+              href="/works/aitgp"
+              className="group relative mb-8 block overflow-hidden rounded-2xl border border-rose-500/40 bg-gradient-to-r from-[#1a1014] via-[#241016] to-[#1a0e12] px-6 py-7 shadow-sm transition hover:border-rose-400/70 md:px-8"
+            >
+              <span
+                className="pointer-events-none absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-amber-500/15 to-transparent"
+                aria-hidden
+              />
+              <div className="relative flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <span className="inline-flex rounded-full bg-gradient-to-r from-rose-500 to-amber-500 px-3 py-1 text-xs font-semibold text-white">
+                    NEW · 賽事看板
+                  </span>
+                  <h2 className="mt-3 text-2xl font-semibold text-white md:text-3xl">
+                    AITGP 交易大獎賽
+                  </h2>
+                  <p className="mt-2 max-w-2xl text-sm leading-relaxed text-rose-100/80 md:text-base">
+                    AI Trading Grand Prix — 把 F1 的車隊、站次與積分精神帶進交易場。進入戰況看板，查看各車隊每站的標的與盈虧。
+                  </p>
+                </div>
+                <span className="inline-flex items-center gap-2 rounded-full border border-rose-400/50 px-4 py-2 text-sm font-medium text-white transition group-hover:bg-rose-500/20">
+                  進入戰況看板
+                  <span aria-hidden className="transition group-hover:translate-x-0.5">
+                    →
+                  </span>
+                </span>
+              </div>
+            </Link>
+          </Reveal>
           <div className="space-y-6">
             {works.map((w, i) => (
               <Reveal key={w.title} delay={0.06 * i}>

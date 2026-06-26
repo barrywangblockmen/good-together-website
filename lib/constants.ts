@@ -3,10 +3,17 @@ export const SITE_NAME_EN = "Taiwan Good Together Association";
 export const SITE_TAGLINE = "Good Together, Act Better.";
 export const NOTIFY_EMAIL = "barrywang.blockmen@gmail.com";
 
-export const NAV_LINKS = [
+export type NavLink = {
+  href: string;
+  label: string;
+  highlight?: boolean;
+};
+
+export const NAV_LINKS: NavLink[] = [
   { href: "/", label: "首頁" },
   { href: "/about", label: "關於協會" },
   { href: "/themes", label: "主題與課程" },
   { href: "/works", label: "成果展示" },
   { href: "/activities", label: "活動照片牆" },
-] as const;
+  { href: "/works/aitgp", label: "AITGP 交易大獎賽", highlight: true },
+];

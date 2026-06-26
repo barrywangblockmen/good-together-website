@@ -1,0 +1,325 @@
+// AI Trading Grand Prix (AITGP) 賽事資料層
+// 全部資料皆為手動維護，暫不即時更新。日後補上其餘車隊與各站盈虧，只需編輯本檔。
+
+export type TradeDirection = "long" | "short";
+
+export type MainLeg = {
+  symbol: string;
+  label?: string;
+  direction: TradeDirection;
+  returnPct?: number;
+};
+
+export type SprintLeg = {
+  symbol: string;
+  label?: string;
+  returnPct?: number;
+};
+
+export type Team = {
+  id: string;
+  name: string;
+  driver: string;
+  /** 車隊代表色（livery 主色），用於卡片與佔位視覺 */
+  color: string;
+  /** 一句車隊簡介 / slogan */
+  blurb?: string;
+  /** 車隊 Logo 圖片路徑（public 起算）；佔位車隊留空 */
+  logo?: string;
+  /** 賽車圖片路徑（public 起算）；佔位車隊留空 */
+  car?: string;
+  isPlaceholder?: boolean;
+};
+
+export type RoundStatus = "warmup" | "upcoming" | "racing" | "settled";
+
+export type Round = {
+  id: string;
+  /** 顯示用站號，例如 R01；暖身週為 GP0 */
+  code: string;
+  name: string;
+  theme: string;
+  circuit: string;
+  tradingPeriod: string;
+  settleDate: string;
+  status: RoundStatus;
+  note?: string;
+};
+
+export type RoundEntry = {
+  teamId: string;
+  roundId: string;
+  main: MainLeg[];
+  sprint: SprintLeg[];
+  /** 該站賽季積分（主賽名次給分）；尚未結算則留空 */
+  points?: number;
+  /** 是否為示意資料（賽季尚未開跑） */
+  sample?: boolean;
+};
+
+// 主賽獎金（每站總額 50 USDT）
+export const MAIN_PRIZES = [
+  { place: "第一名", reward: "25 USDT" },
+  { place: "第二名", reward: "15 USDT" },
+  { place: "第三名", reward: "10 USDT" },
+] as const;
+
+// 賽季積分表（每站給分，累積年度成績）
+export const POINTS_TABLE = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1] as const;
+
+export const ANNUAL_AWARDS = [
+  { title: "年度車隊冠軍", desc: "總積分最高" },
+  { title: "最佳 AI 車隊設計", desc: "Logo、賽車、故事設定最佳" },
+] as const;
+
+export const RACE_FORMATS = [
+  {
+    key: "main",
+    badge: "主賽 · GP Race",
+    title: "盈虧率賽",
+    skill: "交易能力",
+    desc: "每站選 2 個標的，可做多、可做空，1x 槓桿。賽期內可自由選擇進、出場時機，但每個標的僅限一次（開倉一次、平倉一次）。主賽不鎖定標的，各隊可選到相同標的。成績取兩個標的報酬率的平均。",
+  },
+  {
+    key: "sprint",
+    badge: "副賽 · Sprint Race",
+    title: "股價表現賽",
+    skill: "選股能力",
+    desc: "每站選 2 個標的，只能做多（可全程 HODL）。進場限定賽期前兩天（週一、週二），先喊先贏鎖定標的，以選定時價格起算，至賽期最後一天收盤統一結算。副賽標的各隊不得重複。成績取兩個標的表現平均。",
+  },
+] as const;
+
+export const ROUND_RULES = [
+  "主賽標的不鎖定，各隊可選相同標的；賽期內每標的僅限開倉、平倉各一次。",
+  "副賽標的先喊先贏、不得重複；進場限定賽期前兩天，最後一天統一結算。",
+  "可用現有持倉參賽：起始開倉價以當期週一開盤價為準；未平倉則以當期週五收盤價結算。",
+  "固定線上會議：每週一 16:00（AI 實作坊結束後）。副賽須於賽期前兩天進場並提交截圖；主賽進場時點自由。",
+] as const;
+
+export const POINTS_NOTE =
+  "主賽與副賽積分分開計算（每站各依名次給分）；年度排名以主賽 + 副賽總積分合計。";
+
+export const SEASON_LABEL = "2026 賽季";
+export const SEASON_KICKOFF = "2026 年 6 月 29 日（建隊週）";
+
+export const TEAMS: Team[] = [
+  {
+    id: "strawberry-berry",
+    name: "草莓貝瑞車隊",
+    driver: "Barry",
+    color: "#e11d48",
+    blurb: "用 AI 整理財報、抓進出場點位，紀律進場、設好目標價再放著。",
+    logo: "/aitgp/teams/strawberry-berry/logo.png",
+    car: "/aitgp/teams/strawberry-berry/car.png",
+  },
+  {
+    id: "project-d",
+    name: "Project D車隊",
+    driver: "Eli",
+    color: "#2563eb",
+  },
+  {
+    id: "redrock-racing",
+    name: "RedRock Racing 紅石車隊",
+    driver: "Simon",
+    color: "#dc2626",
+    car: "/aitgp/teams/redrock-racing/car.png",
+  },
+  {
+    id: "princess-yuanying",
+    name: "員瑛公主車隊",
+    driver: "Sheena",
+    color: "#ec4899",
+  },
+  {
+    id: "guinea-pig",
+    name: "天竺鼠車隊",
+    driver: "Nora",
+    color: "#14b8a6",
+  },
+  {
+    id: "money-queue",
+    name: "賺錢要排隊",
+    driver: "Ken",
+    color: "#eab308",
+  },
+  {
+    id: "one-more-order",
+    name: "再凹單就會隊",
+    driver: "Sam",
+    color: "#a855f7",
+  },
+  {
+    id: "youre-right",
+    name: "你說的都隊",
+    driver: "Muriel",
+    color: "#3b82f6",
+  },
+];
+
+export const ROUNDS: Round[] = [
+  {
+    id: "warmup",
+    code: "GP0",
+    name: "台灣站 Taiwan GP",
+    theme: "建隊暖身週",
+    circuit: "台股 / 美股 / 加密 · 暖身賽",
+    tradingPeriod: "6/29（一）– 7/3（五）",
+    settleDate: "7/6（一）公布",
+    status: "upcoming",
+    note: "標的可選台股／美股／加密任一。6/30（二）收盤前截圖開倉、7/3（五）前自選平倉，以截圖標記點位計算，純練習、不計入賽季積分。",
+  },
+  {
+    id: "r01",
+    code: "R01",
+    name: "奧地利站 Austrian GP",
+    theme: "Round 01",
+    circuit: "Red Bull Ring",
+    tradingPeriod: "7/6（一）– 7/17（五）",
+    settleDate: "7/20（一）結算",
+    status: "upcoming",
+  },
+  {
+    id: "r02",
+    code: "R02",
+    name: "匈牙利站 Hungarian GP",
+    theme: "Round 02",
+    circuit: "Hungaroring",
+    tradingPeriod: "7/27（一）– 8/7（五）",
+    settleDate: "8/10（一）結算",
+    status: "upcoming",
+  },
+  {
+    id: "r03",
+    code: "R03",
+    name: "荷蘭站 Dutch GP",
+    theme: "Round 03",
+    circuit: "Zandvoort",
+    tradingPeriod: "8/17（一）– 8/28（五）",
+    settleDate: "8/31（一）結算",
+    status: "upcoming",
+  },
+  {
+    id: "r04",
+    code: "R04",
+    name: "西班牙站 Spanish GP",
+    theme: "Round 04 · 馬德里",
+    circuit: "Madring",
+    tradingPeriod: "9/7（一）– 9/18（五）",
+    settleDate: "9/21（一）結算",
+    status: "upcoming",
+  },
+  {
+    id: "r05",
+    code: "R05",
+    name: "新加坡站 Singapore GP",
+    theme: "Round 05",
+    circuit: "Marina Bay",
+    tradingPeriod: "9/28（一）– 10/9（五）",
+    settleDate: "10/12（一）結算",
+    status: "upcoming",
+  },
+  {
+    id: "r06",
+    code: "R06",
+    name: "美國站 United States GP",
+    theme: "Round 06",
+    circuit: "COTA, Austin",
+    tradingPeriod: "10/19（一）– 10/30（五）",
+    settleDate: "11/2（一）結算",
+    status: "upcoming",
+  },
+  {
+    id: "r07",
+    code: "R07",
+    name: "拉斯維加斯站 Las Vegas GP",
+    theme: "Round 07",
+    circuit: "Las Vegas Strip",
+    tradingPeriod: "11/9（一）– 11/20（五）",
+    settleDate: "11/23（一）結算",
+    status: "upcoming",
+  },
+  {
+    id: "r08",
+    code: "R08",
+    name: "阿布達比站 Abu Dhabi GP",
+    theme: "Round 08 · 年度收官",
+    circuit: "Yas Marina",
+    tradingPeriod: "11/30（一）– 12/11（五）",
+    settleDate: "12/14（一）總結算 + 年度頒獎",
+    status: "upcoming",
+  },
+];
+
+// 各站、各隊成績。賽季開跑後手動填入；目前尚無資料。
+export const ROUND_ENTRIES: RoundEntry[] = [];
+
+/** 盈虧走勢圖用賽程（不含建隊週 GP0 暖身賽） */
+export const CHART_ROUNDS = ROUNDS.filter((r) => r.id !== "warmup");
+
+const team_index = new Map(TEAMS.map((t, i) => [t.id, i]));
+
+export function getTeam(teamId: string): Team | undefined {
+  return TEAMS[team_index.get(teamId) ?? -1];
+}
+
+export function getRoundEntry(teamId: string, roundId: string): RoundEntry | undefined {
+  return ROUND_ENTRIES.find((e) => e.teamId === teamId && e.roundId === roundId);
+}
+
+export function getEntriesForRound(roundId: string): RoundEntry[] {
+  return ROUND_ENTRIES.filter((e) => e.roundId === roundId);
+}
+
+function average(values: number[]): number | undefined {
+  if (values.length === 0) return undefined;
+  return values.reduce((sum, v) => sum + v, 0) / values.length;
+}
+
+export function mainScore(entry: RoundEntry): number | undefined {
+  const legs = entry.main.map((l) => l.returnPct).filter((v): v is number => typeof v === "number");
+  if (legs.length < entry.main.length || legs.length === 0) return undefined;
+  return average(legs);
+}
+
+export function sprintScore(entry: RoundEntry): number | undefined {
+  const legs = entry.sprint.map((l) => l.returnPct).filter((v): v is number => typeof v === "number");
+  if (legs.length < entry.sprint.length || legs.length === 0) return undefined;
+  return average(legs);
+}
+
+export type TeamSeasonStats = {
+  team: Team;
+  points: number;
+  roundsPlayed: number;
+  /** 各站主+副賽平均報酬的累積平均（season P/L 指標）；無資料為 undefined */
+  avgReturnPct?: number;
+};
+
+export function getTeamSeasonStats(teamId: string): TeamSeasonStats {
+  const team = getTeam(teamId)!;
+  const entries = ROUND_ENTRIES.filter((e) => e.teamId === teamId && e.roundId !== "warmup");
+  const points = entries.reduce((sum, e) => sum + (e.points ?? 0), 0);
+  const returns: number[] = [];
+  for (const e of entries) {
+    const m = mainScore(e);
+    const s = sprintScore(e);
+    if (typeof m === "number") returns.push(m);
+    if (typeof s === "number") returns.push(s);
+  }
+  return {
+    team,
+    points,
+    roundsPlayed: entries.length,
+    avgReturnPct: average(returns),
+  };
+}
+
+export function getSeasonStandings(): TeamSeasonStats[] {
+  return TEAMS.map((t) => getTeamSeasonStats(t.id)).sort((a, b) => {
+    if (b.points !== a.points) return b.points - a.points;
+    return (b.avgReturnPct ?? -Infinity) - (a.avgReturnPct ?? -Infinity);
+  });
+}
+
+export const COMPETITION_PDF = "/aitgp/AITGP-競賽公告-v6.pdf";
