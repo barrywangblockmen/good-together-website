@@ -6,6 +6,13 @@ import { ROUND_ENTRIES, ROUNDS, TEAMS, mainScore, sprintScore } from "@/lib/aitg
 
 const DATA_DIR = process.env.AITGP_DATA_DIR ?? path.join(process.cwd(), "data");
 const SNAPSHOT_FILE = path.join(DATA_DIR, "aitgp-hourly.json");
+const LATEST_FILE = path.join(DATA_DIR, "aitgp-latest.json");
+
+export type AitgpLatestPrices = {
+  prices: Record<string, number>;
+  updatedAt: string;
+  unsupported: string[];
+};
 
 export function getActiveSnapshotRoundIds(): string[] {
   return ROUNDS.filter((r) => r.status === "racing").map((r) => r.id);
@@ -18,6 +25,20 @@ export async function readSnapshots(): Promise<SnapshotStore> {
   } catch {
     return {};
   }
+}
+
+export async function readLatestPrices(): Promise<AitgpLatestPrices | null> {
+  try {
+    const raw = await fs.readFile(LATEST_FILE, "utf8");
+    return JSON.parse(raw) as AitgpLatestPrices;
+  } catch {
+    return null;
+  }
+}
+
+export async function writeLatestPrices(latest: AitgpLatestPrices): Promise<void> {
+  await fs.mkdir(DATA_DIR, { recursive: true });
+  await fs.writeFile(LATEST_FILE, JSON.stringify(latest, null, 2), "utf8");
 }
 
 async function writeSnapshots(store: SnapshotStore): Promise<void> {

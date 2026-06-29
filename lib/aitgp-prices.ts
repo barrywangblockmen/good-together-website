@@ -1,5 +1,10 @@
-import { unstable_cache } from "next/cache";
-import { appendHourlySnapshots } from "@/lib/aitgp-snapshots-server";
+import {
+  appendHourlySnapshots,
+  readLatestPrices,
+  readSnapshots,
+  writeLatestPrices,
+  type AitgpLatestPrices,
+} from "@/lib/aitgp-snapshots-server";
 import { AITGP_PRICE_TTL_SECONDS, type AitgpPriceSnapshot } from "@/lib/aitgp-chart";
 import { getAllEntrySymbols } from "@/lib/aitgp";
 
@@ -14,6 +19,13 @@ const TWSE_OTC = new Set(["8255", "5536"]);
 
 /** 暫不支援自動報價 */
 const UNSUPPORTED = new Set(["MTX", "07w1 44500P"]);
+
+let refreshPromise: Promise<AitgpPriceSnapshot> | null = null;
+
+function isWithinTtl(updatedAt: string): boolean {
+  const ageMs = Date.now() - new Date(updatedAt).getTime();
+  return ageMs >= 0 && ageMs < AITGP_PRICE_TTL_SECONDS * 1000;
+}
 
 function isTwStock(symbol: string): boolean {
   return /^\d{4}$/.test(symbol);
@@ -52,7 +64,7 @@ async function fetchBinanceFuturesPrices(symbols: string[]): Promise<AitgpPriceQ
   if (symbols.length === 0) return [];
 
   const res = await fetch("https://fapi.binance.com/fapi/v1/ticker/price", {
-    next: { revalidate: AITGP_PRICE_TTL_SECONDS },
+    cache: "no-store",
   });
   if (!res.ok) throw new Error(`Binance futures HTTP ${res.status}`);
 
@@ -80,7 +92,7 @@ async function fetchTwsePrices(symbols: string[]): Promise<AitgpPriceQuote[]> {
     `https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=${encodeURIComponent(exCh)}`,
     {
       headers: { Accept: "application/json" },
-      next: { revalidate: AITGP_PRICE_TTL_SECONDS },
+      cache: "no-store",
     },
   );
   if (!res.ok) throw new Error(`TWSE MIS HTTP ${res.status}`);
@@ -99,7 +111,7 @@ async function fetchTwsePrices(symbols: string[]): Promise<AitgpPriceQuote[]> {
   return out;
 }
 
-async function fetchAitgpPricesUncached(): Promise<AitgpPriceSnapshot> {
+async function fetchQuotes(): Promise<AitgpLatestPrices> {
   const allSymbols = getAllEntrySymbols();
   const unsupported = allSymbols.filter((s) => UNSUPPORTED.has(s));
   const tracked = allSymbols.filter((s) => !UNSUPPORTED.has(s));
@@ -117,18 +129,45 @@ async function fetchAitgpPricesUncached(): Promise<AitgpPriceSnapshot> {
     prices[q.symbol] = q.price;
   }
 
-  const chartHistory = await appendHourlySnapshots(prices);
-
   return {
     prices,
     updatedAt: new Date().toISOString(),
     unsupported,
+  };
+}
+
+function toSnapshot(latest: AitgpLatestPrices, chartHistory: Awaited<ReturnType<typeof readSnapshots>>): AitgpPriceSnapshot {
+  return {
+    prices: latest.prices,
+    updatedAt: latest.updatedAt,
+    unsupported: latest.unsupported,
     chartHistory,
   };
 }
 
-export const getAitgpPrices = unstable_cache(
-  fetchAitgpPricesUncached,
-  ["aitgp-live-prices"],
-  { revalidate: AITGP_PRICE_TTL_SECONDS },
-);
+/** 向交易所拉最新價、寫入磁碟並追加每小時快照（cron 與 fallback 共用） */
+export async function refreshAitgpPrices(): Promise<AitgpPriceSnapshot> {
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = (async () => {
+    const latest = await fetchQuotes();
+    await writeLatestPrices(latest);
+    const chartHistory = await appendHourlySnapshots(latest.prices);
+    return toSnapshot(latest, chartHistory);
+  })().finally(() => {
+    refreshPromise = null;
+  });
+
+  return refreshPromise;
+}
+
+/** 讀取已持久化的行情；過期時才 fallback 重新抓取 */
+export async function getAitgpPrices(): Promise<AitgpPriceSnapshot> {
+  const [latest, chartHistory] = await Promise.all([readLatestPrices(), readSnapshots()]);
+
+  if (latest && isWithinTtl(latest.updatedAt)) {
+    return toSnapshot(latest, chartHistory);
+  }
+
+  return refreshAitgpPrices();
+}

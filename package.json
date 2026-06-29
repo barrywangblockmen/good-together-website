@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "photos:prepare": "node scripts/prepare-activity-photos.mjs"
+    "photos:prepare": "node scripts/prepare-activity-photos.mjs",
+    "aitgp:fetch-prices": "node scripts/aitgp-fetch-prices.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

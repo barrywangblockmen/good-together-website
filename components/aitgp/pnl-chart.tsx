@@ -28,6 +28,36 @@ function formatPct(v: number) {
   return `${v > 0 ? "+" : ""}${v.toFixed(1)}%`;
 }
 
+function formatAxisPct(v: number) {
+  const rounded = Math.round(v);
+  if (rounded === 0) return "0%";
+  return `${rounded > 0 ? "+" : ""}${rounded}%`;
+}
+
+/** 取好看的步進（0.5、1、2、5…） */
+function niceStep(rough: number): number {
+  const pow = 10 ** Math.floor(Math.log10(rough));
+  const n = rough / pow;
+  if (n <= 1) return pow;
+  if (n <= 2) return 2 * pow;
+  if (n <= 5) return 5 * pow;
+  return 10 * pow;
+}
+
+/** 以 0 為中心的對稱 Y 軸範圍與刻度 */
+function buildSymmetricYScale(values: number[]) {
+  const absMax = values.length ? Math.max(...values.map((v) => Math.abs(v))) : 5;
+  const padded = Math.max(absMax * 1.12, 2);
+  const step = niceStep(padded / 2);
+  const yMax = Math.ceil(padded / step) * step;
+  const yMin = -yMax;
+  const ticks: number[] = [];
+  for (let v = -yMax; v <= yMax + 1e-9; v += step) {
+    ticks.push(Math.round(v * 1000) / 1000);
+  }
+  return { yMin, yMax, yTicks: ticks };
+}
+
 /** 折線圖最前線：小賽車標記（側視、朝右） */
 function ChartCarMarker({
   x,
@@ -223,25 +253,22 @@ export function PnlChart() {
     );
   }, [chartCtx, race, livePrices, maxIdx]);
 
-  const allValues = series.flatMap((s) => s.points.map((p) => p.value));
+  const allValues = useMemo(
+    () => series.flatMap((s) => s.points.map((p) => p.value)),
+    [series],
+  );
   const hasData = allValues.length > 0;
   const gridReady = grid.length > 0 && maxIdx >= 0;
 
-  const rawMin = hasData ? Math.min(0, ...allValues) : -5;
-  const rawMax = hasData ? Math.max(0, ...allValues) : 5;
-  const span = rawMax - rawMin || 10;
-  const yMin = rawMin - span * 0.12;
-  const yMax = rawMax + span * 0.12;
+  const { yMin, yMax, yTicks } = useMemo(
+    () => buildSymmetricYScale(allValues),
+    [allValues],
+  );
 
   const slotCount = Math.max(grid.length, 1);
   const xFor = (idx: number) =>
     PAD.left + (slotCount === 1 ? PLOT_W / 2 : (idx / (slotCount - 1)) * PLOT_W);
   const yFor = (v: number) => PAD.top + PLOT_H - ((v - yMin) / (yMax - yMin)) * PLOT_H;
-
-  const yTicks = useMemo(() => {
-    const count = 4;
-    return Array.from({ length: count + 1 }, (_, k) => yMin + ((yMax - yMin) * k) / count);
-  }, [yMin, yMax]);
 
   const isWarmupOnly =
     scope === "warmup" ||
@@ -352,7 +379,7 @@ export function PnlChart() {
 
             {yTicks.map((t, i) => {
               const y = yFor(t);
-              const isZero = Math.abs(t) < 1e-9;
+              const isZero = t === 0;
               return (
                 <g key={i}>
                   <line
@@ -372,7 +399,7 @@ export function PnlChart() {
                     fontSize="11"
                     fill="#a1a1aa"
                   >
-                    {`${t > 0 ? "+" : ""}${t.toFixed(0)}%`}
+                    {formatAxisPct(t)}
                   </text>
                 </g>
               );

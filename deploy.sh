@@ -63,6 +63,17 @@ ssh -i "$SSH_KEY_PATH" "${SSH_USER}@${SSH_HOST}" "
     pm2 start \"npm run start -- -p $APP_PORT\" --name \"$PM2_APP_NAME\" --update-env
   fi
   pm2 save
+  if [[ -f .env.production ]]; then
+    CRON_MARKER=\"# aitgp-hourly-prices\"
+    CRON_CMD=\"0 * * * * cd $REMOTE_APP_DIR && set -a && source .env.production && set +a && /usr/bin/node scripts/aitgp-fetch-prices.mjs >> /var/log/aitgp-cron.log 2>&1\"
+    (crontab -l 2>/dev/null | grep -Fv \"\$CRON_MARKER\"; echo \"\$CRON_MARKER\"; echo \"\$CRON_CMD\") | crontab -
+    if [[ -n \"\${AITGP_CRON_SECRET:-}\" ]]; then
+      sleep 3
+      /usr/bin/node scripts/aitgp-fetch-prices.mjs || true
+    else
+      echo \"WARN: AITGP_CRON_SECRET not set; skipped initial AITGP price fetch\"
+    fi
+  fi
 "
 
 echo "[3/3] Verify PM2 status..."
