@@ -21,27 +21,43 @@ function pnlClass(v?: number) {
   return "text-zinc-300";
 }
 
+function formatLivePrice(n: number): string {
+  if (n >= 1000) return n.toLocaleString("en-US", { maximumFractionDigits: 2 });
+  if (n >= 1) return n.toFixed(2);
+  if (n >= 0.0001) return n.toFixed(6).replace(/\.?0+$/, "");
+  return n.toPrecision(4);
+}
+
 function LegPriceResult({
   entryPrice,
   resultLabel,
   resultPct,
+  livePrice,
 }: {
   entryPrice?: string;
   resultLabel: "盈虧" | "漲跌";
   resultPct?: number;
+  livePrice?: number;
 }) {
   return (
-    <span className="flex shrink-0 items-center gap-2 text-xs">
-      {entryPrice ? <span className="text-zinc-500">@ {entryPrice}</span> : null}
-      <span className="text-zinc-500">{resultLabel}</span>
-      <span className={`min-w-[3.5rem] text-right font-semibold ${pnlClass(resultPct)}`}>
-        {formatPct(resultPct)}
+    <span className="flex shrink-0 flex-col items-end gap-0.5 text-xs sm:flex-row sm:items-center sm:gap-2">
+      <span className="flex items-center gap-2">
+        {entryPrice ? <span className="text-zinc-500">@ {entryPrice}</span> : null}
+        {livePrice != null ? (
+          <span className="text-zinc-600">現 {formatLivePrice(livePrice)}</span>
+        ) : null}
+      </span>
+      <span className="flex items-center gap-2">
+        <span className="text-zinc-500">{resultLabel}</span>
+        <span className={`min-w-[3.5rem] text-right font-semibold ${pnlClass(resultPct)}`}>
+          {formatPct(resultPct)}
+        </span>
       </span>
     </span>
   );
 }
 
-function MainLegRow({ leg }: { leg: MainLeg }) {
+function MainLegRow({ leg, livePrice }: { leg: MainLeg; livePrice?: number }) {
   return (
     <li className="flex items-center justify-between gap-2 py-1">
       <span className="flex min-w-0 items-center gap-2">
@@ -62,13 +78,14 @@ function MainLegRow({ leg }: { leg: MainLeg }) {
       <LegPriceResult
         entryPrice={leg.entryPrice}
         resultLabel="盈虧"
-        resultPct={mainLegReturnPct(leg)}
+        resultPct={mainLegReturnPct(leg, livePrice)}
+        livePrice={livePrice}
       />
     </li>
   );
 }
 
-function SprintLegRow({ leg }: { leg: SprintLeg }) {
+function SprintLegRow({ leg, livePrice }: { leg: SprintLeg; livePrice?: number }) {
   return (
     <li className="flex items-center justify-between gap-2 py-1">
       <span className="flex min-w-0 items-center gap-2">
@@ -83,7 +100,8 @@ function SprintLegRow({ leg }: { leg: SprintLeg }) {
       <LegPriceResult
         entryPrice={leg.entryPrice}
         resultLabel="漲跌"
-        resultPct={sprintLegReturnPct(leg)}
+        resultPct={sprintLegReturnPct(leg, livePrice)}
+        livePrice={livePrice}
       />
     </li>
   );
@@ -149,10 +167,12 @@ function RoundLegsPanel({
   entry,
   ms,
   ss,
+  livePrices,
 }: {
   entry: NonNullable<ReturnType<typeof getRoundEntry>>;
   ms?: number;
   ss?: number;
+  livePrices?: Record<string, number>;
 }) {
   return (
     <div className="grid grid-cols-1 gap-px bg-white/5 sm:grid-cols-2">
@@ -165,7 +185,11 @@ function RoundLegsPanel({
         </div>
         <ul className="text-xs">
           {entry.main.map((leg) => (
-            <MainLegRow key={`${leg.symbol}-${leg.direction}`} leg={leg} />
+            <MainLegRow
+              key={`${leg.symbol}-${leg.direction}`}
+              leg={leg}
+              livePrice={livePrices?.[leg.symbol]}
+            />
           ))}
         </ul>
       </div>
@@ -178,7 +202,7 @@ function RoundLegsPanel({
         </div>
         <ul className="text-xs">
           {entry.sprint.map((leg) => (
-            <SprintLegRow key={leg.symbol} leg={leg} />
+            <SprintLegRow key={leg.symbol} leg={leg} livePrice={livePrices?.[leg.symbol]} />
           ))}
         </ul>
       </div>
@@ -192,16 +216,18 @@ export function TeamCard({
   badge,
   roundId,
   variant = "card",
+  livePrices,
 }: {
   team: Team;
   stats: TeamSeasonStats;
   badge: string;
   roundId?: string;
   variant?: "card" | "list";
+  livePrices?: Record<string, number>;
 }) {
   const entry = roundId ? getRoundEntry(team.id, roundId) : undefined;
-  const ms = entry ? mainScore(entry) : undefined;
-  const ss = entry ? sprintScore(entry) : undefined;
+  const ms = entry ? mainScore(entry, livePrices) : undefined;
+  const ss = entry ? sprintScore(entry, livePrices) : undefined;
 
   const blurb = team.blurb ? (
     <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-zinc-400">{team.blurb}</p>
@@ -257,7 +283,7 @@ export function TeamCard({
             {roundId ? (
               <div className="border-t border-white/10">
                 {entry ? (
-                  <RoundLegsPanel entry={entry} ms={ms} ss={ss} />
+                  <RoundLegsPanel entry={entry} ms={ms} ss={ss} livePrices={livePrices} />
                 ) : (
                   <div className="px-4 py-4 text-center text-xs text-zinc-500">尚未喊單 · 即將開始</div>
                 )}
@@ -311,7 +337,7 @@ export function TeamCard({
       {roundId ? (
         <div className="border-t border-white/10">
           {entry ? (
-            <RoundLegsPanel entry={entry} ms={ms} ss={ss} />
+            <RoundLegsPanel entry={entry} ms={ms} ss={ss} livePrices={livePrices} />
           ) : (
             <div className="px-4 py-4 text-center text-xs text-zinc-500">尚未喊單 · 即將開始</div>
           )}

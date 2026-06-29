@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { TeamCard } from "@/components/aitgp/team-card";
+import { useAitgpPrices } from "@/components/aitgp/use-aitgp-prices";
 import { ROUNDS, TEAMS, getRoundEntry, getTeamSeasonStats } from "@/lib/aitgp";
 
 type TeamLayout = "1" | "2" | "3" | "list";
@@ -68,6 +69,7 @@ function layoutGridClass(layout: TeamLayout) {
 export function TeamsSection() {
   const [activeId, setActiveId] = useState(ROUNDS[0]?.id ?? "");
   const [layout, setLayout] = useState<TeamLayout>("list");
+  const { snapshot, loading: pricesLoading, error: pricesError } = useAitgpPrices();
   const reduce = useReducedMotion();
   const round = ROUNDS.find((r) => r.id === activeId)!;
   const hasAnyData = TEAMS.some((t) => getRoundEntry(t.id, activeId));
@@ -123,7 +125,26 @@ export function TeamsSection() {
           </div>
 
           <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-            <p className="text-xs text-zinc-500">顯示方式</p>
+            <div className="text-xs text-zinc-500">
+              <p>顯示方式</p>
+              {snapshot?.updatedAt ? (
+                <p className="mt-0.5 text-[10px] text-zinc-600">
+                  行情更新{" "}
+                  {new Date(snapshot.updatedAt).toLocaleString("zh-TW", {
+                    month: "numeric",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: false,
+                  })}
+                  （每小時）
+                </p>
+              ) : pricesLoading ? (
+                <p className="mt-0.5 text-[10px] text-zinc-600">行情載入中…</p>
+              ) : pricesError ? (
+                <p className="mt-0.5 text-[10px] text-amber-600/80">行情暫不可用</p>
+              ) : null}
+            </div>
             <div
               className="inline-flex rounded-lg border border-white/10 bg-black/20 p-1"
               role="group"
@@ -161,6 +182,7 @@ export function TeamsSection() {
                 badge={`#${i + 1}`}
                 roundId={activeId}
                 variant={layout === "list" ? "list" : "card"}
+                livePrices={snapshot?.prices}
               />
             ))}
           </div>

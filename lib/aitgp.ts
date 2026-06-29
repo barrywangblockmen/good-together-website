@@ -117,7 +117,7 @@ export const TEAMS: Team[] = [
     id: "strawberry-berry",
     name: "草莓貝瑞車隊",
     driver: "Barry",
-    color: "#e11d48",
+    color: "#FF4D6D",
     blurb: "用 AI 整理財報、抓進出場點位，紀律進場、設好目標價再放著。",
     logo: "/aitgp/teams/strawberry-berry/logo.png",
     car: "/aitgp/teams/strawberry-berry/car.png",
@@ -126,13 +126,13 @@ export const TEAMS: Team[] = [
     id: "project-d",
     name: "Project D車隊",
     driver: "Eli",
-    color: "#2563eb",
+    color: "#00D4FF",
   },
   {
     id: "redrock-racing",
     name: "RedRock Racing 紅石車隊",
     driver: "Simon",
-    color: "#dc2626",
+    color: "#D4A24E",
     logo: "/aitgp/teams/redrock-racing/logo.png",
     car: "/aitgp/teams/redrock-racing/car.png",
   },
@@ -140,7 +140,7 @@ export const TEAMS: Team[] = [
     id: "princess-yuanying",
     name: "員瑛公主車隊",
     driver: "Sheena",
-    color: "#be123c",
+    color: "#E040FB",
     blurb: "Princess Racing Team — 皇冠加冕，紅鑽閃耀賽道。",
     logo: "/aitgp/teams/princess-yuanying/logo.png",
     car: "/aitgp/teams/princess-yuanying/car.png",
@@ -149,7 +149,7 @@ export const TEAMS: Team[] = [
     id: "guinea-pig",
     name: "天竺鼠車隊",
     driver: "Nora",
-    color: "#f97316",
+    color: "#FF9500",
     blurb: "Guinea Pig Racing — 天竺鼠出擊，WHEEK 全速前進。",
     logo: "/aitgp/teams/guinea-pig/logo.png",
     car: "/aitgp/teams/guinea-pig/car.png",
@@ -158,19 +158,19 @@ export const TEAMS: Team[] = [
     id: "money-queue",
     name: "賺錢要排隊",
     driver: "Ken",
-    color: "#eab308",
+    color: "#4CD964",
   },
   {
     id: "one-more-order",
     name: "再凹單就會隊",
     driver: "Sam",
-    color: "#a855f7",
+    color: "#AF52DE",
   },
   {
     id: "youre-right",
     name: "你說的都隊",
     driver: "Muriel",
-    color: "#3b82f6",
+    color: "#5B8DEF",
   },
 ];
 
@@ -303,7 +303,7 @@ export const ROUND_ENTRIES: RoundEntry[] = [
     ],
     sprint: [
       { symbol: "XAUT", entryPrice: "4061.6" },
-      { symbol: "MU", entryPrice: "1155.58" },
+      { symbol: "MUUSDT", entryPrice: "1155.58" },
     ],
   },
   {
@@ -311,11 +311,11 @@ export const ROUND_ENTRIES: RoundEntry[] = [
     roundId: "warmup",
     main: [
       { symbol: "2337", label: "旺宏", direction: "long", entryPrice: "166" },
-      { symbol: "6443", label: "景碩", direction: "long", entryPrice: "794" },
+      { symbol: "3189", label: "景碩", direction: "long", entryPrice: "794" },
     ],
     sprint: [
       { symbol: "2337", label: "旺宏", entryPrice: "166" },
-      { symbol: "6443", label: "景碩", entryPrice: "794" },
+      { symbol: "3189", label: "景碩", entryPrice: "794" },
     ],
   },
   {
@@ -385,6 +385,16 @@ export function getEntriesForRound(roundId: string): RoundEntry[] {
   return ROUND_ENTRIES.filter((e) => e.roundId === roundId);
 }
 
+/** 所有已喊單標的（去重），供行情 API 使用 */
+export function getAllEntrySymbols(): string[] {
+  const symbols = new Set<string>();
+  for (const entry of ROUND_ENTRIES) {
+    for (const leg of entry.main) symbols.add(leg.symbol);
+    for (const leg of entry.sprint) symbols.add(leg.symbol);
+  }
+  return [...symbols];
+}
+
 function average(values: number[]): number | undefined {
   if (values.length === 0) return undefined;
   return values.reduce((sum, v) => sum + v, 0) / values.length;
@@ -401,32 +411,36 @@ function pctFromPrices(entry: number, exit: number, direction: TradeDirection = 
   return direction === "short" ? ((entry - exit) / entry) * 100 : ((exit - entry) / entry) * 100;
 }
 
-/** 主賽單一標的盈虧 % */
-export function mainLegReturnPct(leg: MainLeg): number | undefined {
+/** 主賽單一標的盈虧 %；livePrice 為即時行情（未平倉時使用） */
+export function mainLegReturnPct(leg: MainLeg, livePrice?: number): number | undefined {
   if (typeof leg.returnPct === "number") return leg.returnPct;
   const entry = parsePrice(leg.entryPrice);
-  const exit = parsePrice(leg.exitPrice);
+  const exit = parsePrice(leg.exitPrice) ?? livePrice;
   if (entry == null || exit == null) return undefined;
   return pctFromPrices(entry, exit, leg.direction);
 }
 
-/** 副賽單一標的漲跌 % */
-export function sprintLegReturnPct(leg: SprintLeg): number | undefined {
+/** 副賽單一標的漲跌 %；livePrice 為即時行情 */
+export function sprintLegReturnPct(leg: SprintLeg, livePrice?: number): number | undefined {
   if (typeof leg.returnPct === "number") return leg.returnPct;
   const entry = parsePrice(leg.entryPrice);
-  const exit = parsePrice(leg.exitPrice);
+  const exit = parsePrice(leg.exitPrice) ?? livePrice;
   if (entry == null || exit == null) return undefined;
   return pctFromPrices(entry, exit, "long");
 }
 
-export function mainScore(entry: RoundEntry): number | undefined {
-  const legs = entry.main.map(mainLegReturnPct).filter((v): v is number => typeof v === "number");
+export function mainScore(entry: RoundEntry, livePrices?: Record<string, number>): number | undefined {
+  const legs = entry.main
+    .map((l) => mainLegReturnPct(l, livePrices?.[l.symbol]))
+    .filter((v): v is number => typeof v === "number");
   if (legs.length < entry.main.length || legs.length === 0) return undefined;
   return average(legs);
 }
 
-export function sprintScore(entry: RoundEntry): number | undefined {
-  const legs = entry.sprint.map(sprintLegReturnPct).filter((v): v is number => typeof v === "number");
+export function sprintScore(entry: RoundEntry, livePrices?: Record<string, number>): number | undefined {
+  const legs = entry.sprint
+    .map((l) => sprintLegReturnPct(l, livePrices?.[l.symbol]))
+    .filter((v): v is number => typeof v === "number");
   if (legs.length < entry.sprint.length || legs.length === 0) return undefined;
   return average(legs);
 }
