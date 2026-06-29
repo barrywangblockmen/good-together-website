@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   CHART_TAB_ROUNDS,
   buildRoundHourGrid,
+  buildSnapshotByHourKey,
   currentGridIndex,
   formatSnapshotLabel,
   pickAxisTicks,
@@ -106,25 +107,35 @@ function buildTeamSeriesOnGrid(
   maxIdx: number,
 ): TeamSeries[] {
   const field = race === "main" ? "main" : "sprint";
-  const snapMap = new Map((snapshots ?? []).map((s) => [s.hourKey, s]));
+  const snapMap = buildSnapshotByHourKey(snapshots);
 
   return TEAMS.map((team, i) => {
     const points: ChartPoint[] = [];
     const entry = getRoundEntry(team.id, roundId);
     const offset = valueOffset(team.id);
+    let lastValue: number | undefined;
 
     for (let idx = 0; idx <= maxIdx; idx++) {
       const slot = grid[idx];
       const snap = snapMap.get(slot.hourKey);
       let v = snap?.teams[team.id]?.[field];
 
-      if (typeof v !== "number" && idx === maxIdx && entry && livePrices) {
-        v = race === "main" ? mainScore(entry, livePrices) : sprintScore(entry, livePrices);
+      if (typeof v === "number") {
+        lastValue = v;
+      } else if (idx === maxIdx && entry && livePrices) {
+        const live =
+          race === "main" ? mainScore(entry, livePrices) : sprintScore(entry, livePrices);
+        if (typeof live === "number") lastValue = live;
       }
 
-      if (typeof v === "number") {
-        points.push({ idx, label: slot.label, value: v + offset });
+      if (typeof lastValue === "number") {
+        points.push({ idx, label: slot.label, value: lastValue + offset });
       }
+    }
+
+    // 賽期起點 0% 錨點，確保折線能從左側畫到目前位置
+    if (points.length > 0 && points[0].idx > 0) {
+      points.unshift({ idx: 0, label: grid[0].label, value: offset });
     }
 
     return { team, badge: `#${i + 1}`, points };
@@ -144,11 +155,16 @@ function scopeTitle(scope: ChartScope): string {
 
 export function PnlChart() {
   const { snapshot, loading } = useAitgpPrices();
+  const [mounted, setMounted] = useState(false);
   const [scope, setScope] = useState<ChartScope>(defaultScope);
   const [race, setRace] = useState<RaceType>("main");
   const [hovered, setHovered] = useState<string | null>(null);
   const [pinned, setPinned] = useState<string | null>(null);
   const active = hovered ?? pinned;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const history = snapshot?.chartHistory ?? {};
   const livePrices = snapshot?.prices;
@@ -177,7 +193,10 @@ export function PnlChart() {
   }, [scope, race, history]);
 
   const grid = chartCtx?.grid ?? [];
-  const maxIdx = useMemo(() => currentGridIndex(grid), [grid]);
+  const maxIdx = useMemo(
+    () => (mounted ? currentGridIndex(grid) : -1),
+    [grid, mounted],
+  );
   const axisTicks = useMemo(() => pickAxisTicks(grid), [grid]);
   const dayBoundaries = useMemo(() => {
     const out: number[] = [];
@@ -240,11 +259,11 @@ export function PnlChart() {
         <div>
           <span className="text-xs font-semibold text-zinc-300">{scopeTitle(scope)}</span>
           {snapshot?.updatedAt ? (
-            <p className="mt-0.5 text-[10px] text-zinc-600">
+            <p className="mt-0.5 text-[10px] text-zinc-600" suppressHydrationWarning>
               行情每小時更新 · 最近 {formatSnapshotLabel(snapshot.updatedAt)}
               {periodHint ? ` · 賽期 ${periodHint}` : ""}
             </p>
-          ) : loading ? (
+          ) : loading || !mounted ? (
             <p className="mt-0.5 text-[10px] text-zinc-600">行情載入中…</p>
           ) : null}
         </div>
@@ -302,9 +321,9 @@ export function PnlChart() {
         {scope === "warmup" ? " · GP0 不計入賽季積分" : ""}
       </p>
 
-      {!gridReady ? (
+      {!gridReady || !mounted ? (
         <div className="mt-4 flex h-48 items-center justify-center rounded-xl border border-dashed border-white/15 text-sm text-zinc-500">
-          {loading
+          {!mounted || loading
             ? "載入行情中…"
             : scope === "cumulative" && isWarmupOnly
               ? "賽季開跑後，此處將顯示 R01 起的累計走勢。"

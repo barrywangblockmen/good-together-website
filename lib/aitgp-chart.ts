@@ -176,6 +176,17 @@ export function formatSnapshotLabel(iso: string): string {
   return formatHourLabel(new Date(iso));
 }
 
+/** 以台北時間對齊快照（相容舊版 UTC hourKey） */
+export function buildSnapshotByHourKey(
+  snapshots: HourlyRoundSnapshot[] | undefined,
+): Map<string, HourlyRoundSnapshot> {
+  const map = new Map<string, HourlyRoundSnapshot>();
+  for (const snap of snapshots ?? []) {
+    map.set(toHourKeyTaipei(new Date(snap.at)), snap);
+  }
+  return map;
+}
+
 /** 賽季站次（不含暖身）最後一筆快照的累計分數 */
 export function settledRoundTotals(
   store: SnapshotStore,
