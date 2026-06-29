@@ -139,7 +139,7 @@ export async function fetchTxoPrice(
     if (Number(cols[3]) !== strike) continue;
     if (cols[4] !== rightLabel) continue;
     const price = Number(cols[8]?.replace(/,/g, ""));
-    const session = cols[16] ?? "一般";
+    const session = cols[17] ?? cols[16] ?? "一般";
     if (Number.isFinite(price) && price > 0) rows.push({ session, price });
   }
 
