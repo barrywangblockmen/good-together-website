@@ -1,10 +1,12 @@
 import {
   appendHourlySnapshots,
   readLatestPrices,
+  readManualPrices,
   readSnapshots,
   writeLatestPrices,
   type AitgpLatestPrices,
 } from "@/lib/aitgp-snapshots-server";
+import { collectTaifexTargets, fetchTaifexPrices } from "@/lib/aitgp-taifex";
 import { AITGP_PRICE_TTL_SECONDS, type AitgpPriceSnapshot } from "@/lib/aitgp-chart";
 import { getAllEntrySymbols } from "@/lib/aitgp";
 
@@ -13,12 +15,10 @@ export { AITGP_PRICE_TTL_SECONDS, type AitgpPriceSnapshot } from "@/lib/aitgp-ch
 export type AitgpPriceQuote = {
   symbol: string;
   price: number;
-  source: "binance-futures" | "twse";
+  source: "binance-futures" | "twse" | "taifex";
 };
-const TWSE_OTC = new Set(["8255", "5536"]);
 
-/** 暫不支援自動報價 */
-const UNSUPPORTED = new Set(["MTX", "07w1 44500P"]);
+const TWSE_OTC = new Set(["8255", "5536"]);
 
 let refreshPromise: Promise<AitgpPriceSnapshot> | null = null;
 
@@ -29,6 +29,10 @@ function isWithinTtl(updatedAt: string): boolean {
 
 function isTwStock(symbol: string): boolean {
   return /^\d{4}$/.test(symbol);
+}
+
+function isTaifexSymbol(symbol: string): boolean {
+  return symbol === "MTX" || /^\d{2}w\d\s+\d+[PC]$/i.test(symbol);
 }
 
 function twseChannel(symbol: string): "tse" | "otc" {
@@ -113,21 +117,31 @@ async function fetchTwsePrices(symbols: string[]): Promise<AitgpPriceQuote[]> {
 
 async function fetchQuotes(): Promise<AitgpLatestPrices> {
   const allSymbols = getAllEntrySymbols();
-  const unsupported = allSymbols.filter((s) => UNSUPPORTED.has(s));
-  const tracked = allSymbols.filter((s) => !UNSUPPORTED.has(s));
+  const tracked = allSymbols.filter((s) => !isTaifexSymbol(s));
 
   const twSymbols = tracked.filter(isTwStock);
   const binanceSymbols = tracked.filter((s) => !isTwStock(s));
 
-  const [binanceQuotes, twseQuotes] = await Promise.all([
+  const [binanceQuotes, twseQuotes, taifexPrices, manualPrices] = await Promise.all([
     fetchBinanceFuturesPrices(binanceSymbols),
     fetchTwsePrices(twSymbols),
+    fetchTaifexPrices(collectTaifexTargets()),
+    readManualPrices(),
   ]);
 
   const prices: Record<string, number> = {};
   for (const q of [...binanceQuotes, ...twseQuotes]) {
     prices[q.symbol] = q.price;
   }
+  for (const [symbol, price] of Object.entries(taifexPrices)) {
+    prices[symbol] = price;
+  }
+  // 手動覆寫優先（期貨所 API 失敗或需人工校正時）
+  for (const [symbol, price] of Object.entries(manualPrices)) {
+    prices[symbol] = price;
+  }
+
+  const unsupported = allSymbols.filter((s) => prices[s] == null);
 
   return {
     prices,

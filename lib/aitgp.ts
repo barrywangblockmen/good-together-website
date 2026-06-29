@@ -13,6 +13,8 @@ export type MainLeg = {
   exitPrice?: string;
   /** 盈虧 %；可直接填入，或由 entryPrice + exitPrice 推算 */
   returnPct?: number;
+  /** 期貨所契約月份，例如 MTX 用 202607 */
+  taifexContract?: string;
 };
 
 export type SprintLeg = {
@@ -24,6 +26,8 @@ export type SprintLeg = {
   exitPrice?: string;
   /** 漲跌 %；可直接填入，或由 entryPrice + exitPrice 推算 */
   returnPct?: number;
+  /** 期貨所契約月份，例如 MTX 用 202607 */
+  taifexContract?: string;
 };
 
 export type Team = {
@@ -334,11 +338,11 @@ export const ROUND_ENTRIES: RoundEntry[] = [
     teamId: "one-more-order",
     roundId: "warmup",
     main: [
-      { symbol: "MTX", label: "小台指期", direction: "long", entryPrice: "45558" },
+      { symbol: "MTX", label: "小台指期", direction: "long", entryPrice: "45558", taifexContract: "202607" },
       { symbol: "07w1 44500P", label: "小台 Put", direction: "short", entryPrice: "255" },
     ],
     sprint: [
-      { symbol: "MTX", label: "小台指", entryPrice: "45558" },
+      { symbol: "MTX", label: "小台指", entryPrice: "45558", taifexContract: "202607" },
       { symbol: "2408", label: "南亞科", entryPrice: "453" },
     ],
   },

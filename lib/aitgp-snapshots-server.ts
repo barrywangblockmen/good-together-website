@@ -7,11 +7,18 @@ import { ROUND_ENTRIES, ROUNDS, TEAMS, mainScore, sprintScore } from "@/lib/aitg
 const DATA_DIR = process.env.AITGP_DATA_DIR ?? path.join(process.cwd(), "data");
 const SNAPSHOT_FILE = path.join(DATA_DIR, "aitgp-hourly.json");
 const LATEST_FILE = path.join(DATA_DIR, "aitgp-latest.json");
+const MANUAL_FILE = path.join(DATA_DIR, "aitgp-manual.json");
 
 export type AitgpLatestPrices = {
   prices: Record<string, number>;
   updatedAt: string;
   unsupported: string[];
+};
+
+export type AitgpManualPrices = {
+  prices: Record<string, number>;
+  updatedAt?: string;
+  note?: string;
 };
 
 export function getActiveSnapshotRoundIds(): string[] {
@@ -39,6 +46,17 @@ export async function readLatestPrices(): Promise<AitgpLatestPrices | null> {
 export async function writeLatestPrices(latest: AitgpLatestPrices): Promise<void> {
   await fs.mkdir(DATA_DIR, { recursive: true });
   await fs.writeFile(LATEST_FILE, JSON.stringify(latest, null, 2), "utf8");
+}
+
+/** 手動覆寫行情（期貨／選擇權等無法自動報價時使用） */
+export async function readManualPrices(): Promise<Record<string, number>> {
+  try {
+    const raw = await fs.readFile(MANUAL_FILE, "utf8");
+    const data = JSON.parse(raw) as AitgpManualPrices;
+    return data.prices ?? {};
+  } catch {
+    return {};
+  }
 }
 
 async function writeSnapshots(store: SnapshotStore): Promise<void> {
@@ -74,8 +92,6 @@ export async function appendHourlySnapshots(prices: Record<string, number>): Pro
 
   for (const roundId of activeRoundIds) {
     const list = store[roundId] ?? [];
-    if (list.some((s) => s.hourKey === hourKey)) continue;
-
     const teams = computeTeamSnapshots(roundId, prices);
     if (Object.keys(teams).length === 0) continue;
 
@@ -84,7 +100,13 @@ export async function appendHourlySnapshots(prices: Record<string, number>): Pro
       hourKey,
       teams,
     };
-    list.push(snap);
+
+    const existingIdx = list.findIndex((s) => s.hourKey === hourKey);
+    if (existingIdx >= 0) {
+      list[existingIdx] = snap;
+    } else {
+      list.push(snap);
+    }
     store[roundId] = list;
     changed = true;
   }
