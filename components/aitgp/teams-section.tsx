@@ -5,8 +5,69 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { TeamCard } from "@/components/aitgp/team-card";
 import { ROUNDS, TEAMS, getRoundEntry, getTeamSeasonStats } from "@/lib/aitgp";
 
+type TeamLayout = "1" | "2" | "3" | "list";
+
+const LAYOUT_OPTIONS: { id: TeamLayout; label: string }[] = [
+  { id: "1", label: "一列一張" },
+  { id: "2", label: "一列兩張" },
+  { id: "3", label: "一列三張" },
+  { id: "list", label: "條列式" },
+];
+
+function LayoutIcon({ layout }: { layout: TeamLayout }) {
+  const stroke = "currentColor";
+  const common = { fill: "none", stroke, strokeWidth: 1.5, strokeLinecap: "round" as const };
+
+  switch (layout) {
+    case "1":
+      return (
+        <svg viewBox="0 0 20 20" className="size-4" aria-hidden>
+          <rect x="4" y="4" width="12" height="12" rx="1.5" {...common} />
+        </svg>
+      );
+    case "2":
+      return (
+        <svg viewBox="0 0 20 20" className="size-4" aria-hidden>
+          <rect x="3" y="4" width="6.5" height="12" rx="1.5" {...common} />
+          <rect x="10.5" y="4" width="6.5" height="12" rx="1.5" {...common} />
+        </svg>
+      );
+    case "3":
+      return (
+        <svg viewBox="0 0 20 20" className="size-4" aria-hidden>
+          <rect x="2.5" y="4" width="4" height="12" rx="1" {...common} />
+          <rect x="8" y="4" width="4" height="12" rx="1" {...common} />
+          <rect x="13.5" y="4" width="4" height="12" rx="1" {...common} />
+        </svg>
+      );
+    case "list":
+      return (
+        <svg viewBox="0 0 20 20" className="size-4" aria-hidden>
+          <rect x="3" y="4.5" width="5" height="4" rx="1" {...common} />
+          <line x1="10" y1="6.5" x2="17" y2="6.5" {...common} />
+          <rect x="3" y="11.5" width="5" height="4" rx="1" {...common} />
+          <line x1="10" y1="13.5" x2="17" y2="13.5" {...common} />
+        </svg>
+      );
+  }
+}
+
+function layoutGridClass(layout: TeamLayout) {
+  switch (layout) {
+    case "1":
+      return "grid grid-cols-1 gap-5";
+    case "2":
+      return "grid grid-cols-1 gap-5 md:grid-cols-2";
+    case "3":
+      return "grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3";
+    case "list":
+      return "flex flex-col gap-3";
+  }
+}
+
 export function TeamsSection() {
-  const [activeId, setActiveId] = useState(ROUNDS[1]?.id ?? ROUNDS[0].id);
+  const [activeId, setActiveId] = useState(ROUNDS[0]?.id ?? "");
+  const [layout, setLayout] = useState<TeamLayout>("list");
   const reduce = useReducedMotion();
   const round = ROUNDS.find((r) => r.id === activeId)!;
   const hasAnyData = TEAMS.some((t) => getRoundEntry(t.id, activeId));
@@ -61,7 +122,37 @@ export function TeamsSection() {
             ) : null}
           </div>
 
-          <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs text-zinc-500">顯示方式</p>
+            <div
+              className="inline-flex rounded-lg border border-white/10 bg-black/20 p-1"
+              role="group"
+              aria-label="車隊卡片顯示方式"
+            >
+              {LAYOUT_OPTIONS.map((opt) => {
+                const active = layout === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    title={opt.label}
+                    aria-label={opt.label}
+                    aria-pressed={active}
+                    onClick={() => setLayout(opt.id)}
+                    className={`rounded-md p-2 transition ${
+                      active
+                        ? "bg-white/10 text-white"
+                        : "text-zinc-500 hover:bg-white/5 hover:text-zinc-200"
+                    }`}
+                  >
+                    <LayoutIcon layout={opt.id} />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className={`mt-4 ${layoutGridClass(layout)}`}>
             {TEAMS.map((team, i) => (
               <TeamCard
                 key={team.id}
@@ -69,6 +160,7 @@ export function TeamsSection() {
                 stats={getTeamSeasonStats(team.id)}
                 badge={`#${i + 1}`}
                 roundId={activeId}
+                variant={layout === "list" ? "list" : "card"}
               />
             ))}
           </div>

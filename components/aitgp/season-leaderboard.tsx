@@ -24,8 +24,8 @@ export function SeasonLeaderboard({ standings }: { standings: TeamSeasonStats[] 
               <th className="px-4 py-3 font-medium">名次</th>
               <th className="px-4 py-3 font-medium">車隊</th>
               <th className="px-4 py-3 font-medium">車手</th>
-              <th className="px-4 py-3 text-right font-medium">積分</th>
-              <th className="px-4 py-3 text-right font-medium">平均盈虧</th>
+              <th className="px-4 py-3 text-right font-medium">累計積分</th>
+              <th className="px-4 py-3 text-right font-medium">累計盈虧</th>
             </tr>
           </thead>
           <tbody>
@@ -73,8 +73,8 @@ export function SeasonLeaderboard({ standings }: { standings: TeamSeasonStats[] 
                   </td>
                   <td className="px-4 py-3 text-zinc-400">{s.team.driver}</td>
                   <td className="px-4 py-3 text-right font-bold text-white">{s.points}</td>
-                  <td className={`px-4 py-3 text-right font-semibold ${pnlClass(s.avgReturnPct)}`}>
-                    {formatPct(s.avgReturnPct)}
+                  <td className={`px-4 py-3 text-right font-semibold ${pnlClass(s.cumulativeReturnPct)}`}>
+                    {formatPct(s.cumulativeReturnPct)}
                   </td>
                 </tr>
               );

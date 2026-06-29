@@ -7,12 +7,22 @@ export type MainLeg = {
   symbol: string;
   label?: string;
   direction: TradeDirection;
+  /** 開倉價 */
+  entryPrice?: string;
+  /** 平倉／結算價；與 entryPrice 同時存在時可自動計算盈虧 % */
+  exitPrice?: string;
+  /** 盈虧 %；可直接填入，或由 entryPrice + exitPrice 推算 */
   returnPct?: number;
 };
 
 export type SprintLeg = {
   symbol: string;
   label?: string;
+  /** 進場價 */
+  entryPrice?: string;
+  /** 結算價；與 entryPrice 同時存在時可自動計算漲跌 % */
+  exitPrice?: string;
+  /** 漲跌 %；可直接填入，或由 entryPrice + exitPrice 推算 */
   returnPct?: number;
 };
 
@@ -123,19 +133,26 @@ export const TEAMS: Team[] = [
     name: "RedRock Racing 紅石車隊",
     driver: "Simon",
     color: "#dc2626",
+    logo: "/aitgp/teams/redrock-racing/logo.png",
     car: "/aitgp/teams/redrock-racing/car.png",
   },
   {
     id: "princess-yuanying",
     name: "員瑛公主車隊",
     driver: "Sheena",
-    color: "#ec4899",
+    color: "#be123c",
+    blurb: "Princess Racing Team — 皇冠加冕，紅鑽閃耀賽道。",
+    logo: "/aitgp/teams/princess-yuanying/logo.png",
+    car: "/aitgp/teams/princess-yuanying/car.png",
   },
   {
     id: "guinea-pig",
     name: "天竺鼠車隊",
     driver: "Nora",
-    color: "#14b8a6",
+    color: "#f97316",
+    blurb: "Guinea Pig Racing — 天竺鼠出擊，WHEEK 全速前進。",
+    logo: "/aitgp/teams/guinea-pig/logo.png",
+    car: "/aitgp/teams/guinea-pig/car.png",
   },
   {
     id: "money-queue",
@@ -166,7 +183,7 @@ export const ROUNDS: Round[] = [
     circuit: "台股 / 美股 / 加密 · 暖身賽",
     tradingPeriod: "6/29（一）– 7/3（五）",
     settleDate: "7/6（一）公布",
-    status: "upcoming",
+    status: "racing",
     note: "標的可選台股／美股／加密任一。6/30（二）收盤前截圖開倉、7/3（五）前自選平倉，以截圖標記點位計算，純練習、不計入賽季積分。",
   },
   {
@@ -251,8 +268,105 @@ export const ROUNDS: Round[] = [
   },
 ];
 
-// 各站、各隊成績。賽季開跑後手動填入；目前尚無資料。
-export const ROUND_ENTRIES: RoundEntry[] = [];
+// 各站、各隊成績。賽季開跑後手動填入；暖身週 GP0 已開倉，盈虧待結算。
+export const ROUND_ENTRIES: RoundEntry[] = [
+  {
+    teamId: "project-d",
+    roundId: "warmup",
+    main: [
+      { symbol: "AAVE", direction: "long", entryPrice: "91.5" },
+      { symbol: "2409", label: "友達", direction: "long", entryPrice: "30.6" },
+    ],
+    sprint: [
+      { symbol: "AAVE", entryPrice: "91.5" },
+      { symbol: "2409", label: "友達", entryPrice: "30.6" },
+    ],
+  },
+  {
+    teamId: "money-queue",
+    roundId: "warmup",
+    main: [
+      { symbol: "2603", label: "長榮", direction: "long", entryPrice: "182.5" },
+      { symbol: "2356", label: "英業達", direction: "long", entryPrice: "64.2" },
+    ],
+    sprint: [
+      { symbol: "2603", label: "長榮", entryPrice: "182.5" },
+      { symbol: "2356", label: "英業達", entryPrice: "64.2" },
+    ],
+  },
+  {
+    teamId: "strawberry-berry",
+    roundId: "warmup",
+    main: [
+      { symbol: "PUMP", direction: "long", entryPrice: "0.001447" },
+      { symbol: "HYPY", direction: "long", entryPrice: "62.714" },
+    ],
+    sprint: [
+      { symbol: "XAUT", entryPrice: "4061.6" },
+      { symbol: "MU", entryPrice: "1155.58" },
+    ],
+  },
+  {
+    teamId: "princess-yuanying",
+    roundId: "warmup",
+    main: [
+      { symbol: "2337", label: "旺宏", direction: "long", entryPrice: "166" },
+      { symbol: "6443", label: "景碩", direction: "long", entryPrice: "794" },
+    ],
+    sprint: [
+      { symbol: "2337", label: "旺宏", entryPrice: "166" },
+      { symbol: "6443", label: "景碩", entryPrice: "794" },
+    ],
+  },
+  {
+    teamId: "redrock-racing",
+    roundId: "warmup",
+    main: [
+      { symbol: "8255", label: "朋程", direction: "long", entryPrice: "176.50" },
+      { symbol: "SPCX", direction: "long", entryPrice: "155.34" },
+    ],
+    sprint: [
+      { symbol: "2059", label: "川湖", entryPrice: "7110" },
+      { symbol: "5536", label: "聖暉", entryPrice: "1245" },
+    ],
+  },
+  {
+    teamId: "one-more-order",
+    roundId: "warmup",
+    main: [
+      { symbol: "MTX", label: "小台指期", direction: "long", entryPrice: "45558" },
+      { symbol: "07w1 44500P", label: "小台 Put", direction: "short", entryPrice: "255" },
+    ],
+    sprint: [
+      { symbol: "MTX", label: "小台指", entryPrice: "45558" },
+      { symbol: "2408", label: "南亞科", entryPrice: "453" },
+    ],
+  },
+  {
+    teamId: "youre-right",
+    roundId: "warmup",
+    main: [
+      { symbol: "2330", label: "台積電", direction: "long", entryPrice: "2330" },
+      { symbol: "2308", label: "台達電", direction: "long", entryPrice: "1860" },
+    ],
+    sprint: [
+      { symbol: "2330", label: "台積電", entryPrice: "2330" },
+      { symbol: "2308", label: "台達電", entryPrice: "1860" },
+    ],
+  },
+  {
+    teamId: "guinea-pig",
+    roundId: "warmup",
+    main: [
+      { symbol: "3481", label: "群創", direction: "long", entryPrice: "67" },
+      { symbol: "6669", label: "緯穎", direction: "long", entryPrice: "4335" },
+    ],
+    sprint: [
+      { symbol: "3481", label: "群創", entryPrice: "67" },
+      { symbol: "6669", label: "緯穎", entryPrice: "4335" },
+    ],
+  },
+];
 
 /** 盈虧走勢圖用賽程（不含建隊週 GP0 暖身賽） */
 export const CHART_ROUNDS = ROUNDS.filter((r) => r.id !== "warmup");
@@ -276,24 +390,54 @@ function average(values: number[]): number | undefined {
   return values.reduce((sum, v) => sum + v, 0) / values.length;
 }
 
+function parsePrice(v?: string): number | undefined {
+  if (v == null || v === "") return undefined;
+  const n = Number(v.replace(/,/g, ""));
+  return Number.isFinite(n) ? n : undefined;
+}
+
+function pctFromPrices(entry: number, exit: number, direction: TradeDirection = "long"): number {
+  if (entry === 0) return 0;
+  return direction === "short" ? ((entry - exit) / entry) * 100 : ((exit - entry) / entry) * 100;
+}
+
+/** 主賽單一標的盈虧 % */
+export function mainLegReturnPct(leg: MainLeg): number | undefined {
+  if (typeof leg.returnPct === "number") return leg.returnPct;
+  const entry = parsePrice(leg.entryPrice);
+  const exit = parsePrice(leg.exitPrice);
+  if (entry == null || exit == null) return undefined;
+  return pctFromPrices(entry, exit, leg.direction);
+}
+
+/** 副賽單一標的漲跌 % */
+export function sprintLegReturnPct(leg: SprintLeg): number | undefined {
+  if (typeof leg.returnPct === "number") return leg.returnPct;
+  const entry = parsePrice(leg.entryPrice);
+  const exit = parsePrice(leg.exitPrice);
+  if (entry == null || exit == null) return undefined;
+  return pctFromPrices(entry, exit, "long");
+}
+
 export function mainScore(entry: RoundEntry): number | undefined {
-  const legs = entry.main.map((l) => l.returnPct).filter((v): v is number => typeof v === "number");
+  const legs = entry.main.map(mainLegReturnPct).filter((v): v is number => typeof v === "number");
   if (legs.length < entry.main.length || legs.length === 0) return undefined;
   return average(legs);
 }
 
 export function sprintScore(entry: RoundEntry): number | undefined {
-  const legs = entry.sprint.map((l) => l.returnPct).filter((v): v is number => typeof v === "number");
+  const legs = entry.sprint.map(sprintLegReturnPct).filter((v): v is number => typeof v === "number");
   if (legs.length < entry.sprint.length || legs.length === 0) return undefined;
   return average(legs);
 }
 
 export type TeamSeasonStats = {
   team: Team;
+  /** 各站積分加總（不含暖身週） */
   points: number;
   roundsPlayed: number;
-  /** 各站主+副賽平均報酬的累積平均（season P/L 指標）；無資料為 undefined */
-  avgReturnPct?: number;
+  /** 各站主賽、副賽盈虧 % 加總；無資料為 undefined */
+  cumulativeReturnPct?: number;
 };
 
 export function getTeamSeasonStats(teamId: string): TeamSeasonStats {
@@ -311,14 +455,15 @@ export function getTeamSeasonStats(teamId: string): TeamSeasonStats {
     team,
     points,
     roundsPlayed: entries.length,
-    avgReturnPct: average(returns),
+    cumulativeReturnPct:
+      returns.length > 0 ? returns.reduce((sum, v) => sum + v, 0) : undefined,
   };
 }
 
 export function getSeasonStandings(): TeamSeasonStats[] {
   return TEAMS.map((t) => getTeamSeasonStats(t.id)).sort((a, b) => {
     if (b.points !== a.points) return b.points - a.points;
-    return (b.avgReturnPct ?? -Infinity) - (a.avgReturnPct ?? -Infinity);
+    return (b.cumulativeReturnPct ?? -Infinity) - (a.cumulativeReturnPct ?? -Infinity);
   });
 }
 
