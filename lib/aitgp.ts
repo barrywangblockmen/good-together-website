@@ -299,7 +299,7 @@ export const ROUND_ENTRIES: RoundEntry[] = [
     roundId: "warmup",
     main: [
       { symbol: "PUMP", direction: "long", entryPrice: "0.001447" },
-      { symbol: "HYPY", direction: "long", entryPrice: "62.714" },
+      { symbol: "HYPE", direction: "long", entryPrice: "62.714" },
     ],
     sprint: [
       { symbol: "XAUT", entryPrice: "4061.6" },
