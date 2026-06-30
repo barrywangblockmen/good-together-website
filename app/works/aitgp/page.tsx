@@ -5,6 +5,7 @@ import { TeamsSection } from "@/components/aitgp/teams-section";
 import { createMetadata } from "@/lib/metadata";
 import {
   ANNUAL_AWARDS,
+  INSTRUMENT_RULES,
   MAIN_PRIZES,
   POINTS_NOTE,
   POINTS_TABLE,
@@ -111,6 +112,41 @@ export default function AitgpPage() {
               </Reveal>
             ))}
           </div>
+
+          <Reveal>
+            <div className="mt-5 rounded-2xl border border-amber-500/25 bg-amber-500/5 px-5 py-5">
+              <h3 className="text-sm font-semibold text-amber-200">{INSTRUMENT_RULES.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-zinc-300">{INSTRUMENT_RULES.summary}</p>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-emerald-400/90">
+                    允許
+                  </p>
+                  <ul className="mt-2 space-y-1.5">
+                    {INSTRUMENT_RULES.allowed.map((item) => (
+                      <li key={item} className="text-sm leading-relaxed text-zinc-400">
+                        · {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-rose-400/90">
+                    禁止
+                  </p>
+                  <ul className="mt-2 space-y-1.5">
+                    {INSTRUMENT_RULES.prohibited.map((item) => (
+                      <li key={item} className="text-sm leading-relaxed text-zinc-400">
+                        · {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+              <p className="mt-4 text-sm leading-relaxed text-zinc-400">{INSTRUMENT_RULES.leverageNote}</p>
+              <p className="mt-2 text-sm leading-relaxed text-zinc-500">{INSTRUMENT_RULES.violation}</p>
+            </div>
+          </Reveal>
 
           <Reveal>
             <ul className="mt-5 space-y-2 rounded-2xl border border-white/10 bg-zinc-900/40 px-5 py-4">
