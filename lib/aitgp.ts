@@ -191,7 +191,10 @@ export const TEAMS: Team[] = [
     id: "one-more-order",
     name: "再凹單就會隊",
     driver: "Sam",
-    color: "#AF52DE",
+    color: "#C41E3A",
+    blurb: "ZADJHD — 再凹一單就會…",
+    logo: "/aitgp/teams/one-more-order/logo.png",
+    car: "/aitgp/teams/one-more-order/car.png",
   },
   {
     id: "youre-right",
