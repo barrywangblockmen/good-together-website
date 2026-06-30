@@ -61,8 +61,8 @@ ssh -i "$SSH_KEY_PATH" "${SSH_USER}@${SSH_HOST}" "
   pm2 save
   if [[ -f .env.production ]]; then
     CRON_MARKER=\"# aitgp-hourly-prices\"
-    CRON_CMD=\"CRON_TZ=Asia/Taipei\\n0 * * * * cd $REMOTE_APP_DIR && set -a && source .env.production && set +a && /usr/bin/node scripts/aitgp-fetch-prices.mjs >> $REMOTE_APP_DIR/data/aitgp-cron.log 2>&1\"
-    (crontab -l 2>/dev/null | grep -Fv \"\$CRON_MARKER\" | grep -Fv 'aitgp-fetch-prices' || true; echo \"\$CRON_MARKER\"; printf '%b\\n' \"\$CRON_CMD\") | crontab -
+    CRON_LINE=\"0 * * * * /bin/bash -lc 'cd $REMOTE_APP_DIR && set -a && source .env.production && set +a && /usr/bin/node scripts/aitgp-fetch-prices.mjs >> $REMOTE_APP_DIR/data/aitgp-cron.log 2>&1'\"
+    (crontab -l 2>/dev/null | grep -Fv \"\$CRON_MARKER\" | grep -Fv 'aitgp-fetch-prices' | grep -Fv '^CRON_TZ=Asia/Taipei$' || true; echo \"CRON_TZ=Asia/Taipei\"; echo \"\$CRON_MARKER\"; echo \"\$CRON_LINE\") | crontab -
     if [[ -n \"\${AITGP_CRON_SECRET:-}\" ]]; then
       sleep 3
       /usr/bin/node scripts/aitgp-fetch-prices.mjs || true
