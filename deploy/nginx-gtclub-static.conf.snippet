@@ -3,8 +3,9 @@
 # 背景：活動頁一次載入約 36 張圖。若全走 proxy + limit_req/limit_conn，
 # 並行請求會收到 503，前端 ActivityPhoto 的 onError 會顯示「活動照片」占位。
 #
-# limit_req / limit_conn 請只放在 location /（API 與 Next），不要放在 server 層，
-# 以免連靜態圖也被限流。
+# limit_req / limit_conn 請只放在 location /（API 與 Next），不要放在 server 層。
+# Next.js RSC prefetch 會短時間並行多個 ?_rsc= 請求，burst 過小會 503。
+# /_next/static/ 與 /activities/ 應排除在限流外。完整設定見 deploy/nginx-gtclub.conf
 
 location ^~ /activities/ {
     alias /var/www/good-together/public/activities/;

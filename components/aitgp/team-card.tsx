@@ -21,6 +21,52 @@ function pnlClass(v?: number) {
   return "text-zinc-300";
 }
 
+function SeasonStatsSummary({
+  stats,
+  layout,
+}: {
+  stats: TeamSeasonStats;
+  layout: "list" | "card";
+}) {
+  const items = [
+    { label: "累計積分", value: String(stats.points), className: "text-white" },
+    {
+      label: "累計盈虧（主賽）",
+      value: formatPct(stats.cumulativeMainReturnPct),
+      className: pnlClass(stats.cumulativeMainReturnPct),
+    },
+    {
+      label: "累計漲跌（副賽）",
+      value: formatPct(stats.cumulativeSprintReturnPct),
+      className: pnlClass(stats.cumulativeSprintReturnPct),
+    },
+  ] as const;
+
+  if (layout === "list") {
+    return (
+      <div className="flex shrink-0 flex-wrap justify-end gap-x-4 gap-y-2 text-center sm:gap-x-5">
+        {items.map((item) => (
+          <div key={item.label} className="min-w-[4.5rem]">
+            <p className="text-[10px] leading-tight text-zinc-500">{item.label}</p>
+            <p className={`text-sm font-bold ${item.className}`}>{item.value}</p>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-3 gap-px border-t border-white/10 bg-white/5 text-center">
+      {items.map((item) => (
+        <div key={item.label} className="bg-zinc-900/70 px-1 py-3">
+          <p className="text-[10px] leading-tight text-zinc-500">{item.label}</p>
+          <p className={`text-sm font-bold ${item.className}`}>{item.value}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function formatLivePrice(n: number): string {
   if (n >= 1000) return n.toLocaleString("en-US", { maximumFractionDigits: 2 });
   if (n >= 1) return n.toFixed(2);
@@ -267,18 +313,7 @@ export function TeamCard({
                   {blurb}
                 </div>
               </div>
-              <div className="flex shrink-0 gap-4 text-center sm:gap-6">
-                <div>
-                  <p className="text-[10px] uppercase tracking-wide text-zinc-500">累計積分</p>
-                  <p className="text-sm font-bold text-white">{stats.points}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] uppercase tracking-wide text-zinc-500">累計盈虧</p>
-                  <p className={`text-sm font-bold ${pnlClass(stats.cumulativeReturnPct)}`}>
-                    {formatPct(stats.cumulativeReturnPct)}
-                  </p>
-                </div>
-              </div>
+              <SeasonStatsSummary stats={stats} layout="list" />
             </div>
             {roundId ? (
               <div className="border-t border-white/10">
@@ -321,18 +356,7 @@ export function TeamCard({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-px border-t border-white/10 bg-white/5 text-center">
-        <div className="bg-zinc-900/70 px-2 py-3">
-          <p className="text-[10px] uppercase tracking-wide text-zinc-500">累計積分</p>
-          <p className="text-sm font-bold text-white">{stats.points}</p>
-        </div>
-        <div className="bg-zinc-900/70 px-2 py-3">
-          <p className="text-[10px] uppercase tracking-wide text-zinc-500">累計盈虧</p>
-          <p className={`text-sm font-bold ${pnlClass(stats.cumulativeReturnPct)}`}>
-            {formatPct(stats.cumulativeReturnPct)}
-          </p>
-        </div>
-      </div>
+      <SeasonStatsSummary stats={stats} layout="card" />
 
       {roundId ? (
         <div className="border-t border-white/10">

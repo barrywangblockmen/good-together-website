@@ -123,9 +123,19 @@ type ChartPoint = { idx: number; label: string; value: number };
 
 type TeamSeries = {
   team: Team;
-  badge: string;
   points: ChartPoint[];
+  latestValue?: number;
+  rankBadge?: string;
 };
+
+function withRankNumbers(items: TeamSeries[]): TeamSeries[] {
+  const sorted = [...items].sort((a, b) => {
+    const av = typeof a.latestValue === "number" ? a.latestValue : -Infinity;
+    const bv = typeof b.latestValue === "number" ? b.latestValue : -Infinity;
+    return bv - av;
+  });
+  return sorted.map((s, i) => ({ ...s, rankBadge: `#${i + 1}` }));
+}
 
 function buildTeamSeriesOnGrid(
   grid: HourSlot[],
@@ -139,7 +149,7 @@ function buildTeamSeriesOnGrid(
   const field = race === "main" ? "main" : "sprint";
   const snapMap = buildSnapshotByHourKey(snapshots);
 
-  return TEAMS.map((team, i) => {
+  return TEAMS.map((team) => {
     const points: ChartPoint[] = [];
     const entry = getRoundEntry(team.id, roundId);
     const offset = valueOffset(team.id);
@@ -168,7 +178,7 @@ function buildTeamSeriesOnGrid(
       points.unshift({ idx: 0, label: grid[0].label, value: offset });
     }
 
-    return { team, badge: `#${i + 1}`, points };
+    return { team, points };
   });
 }
 
@@ -242,7 +252,7 @@ export function PnlChart() {
 
   const series = useMemo(() => {
     if (!chartCtx || maxIdx < 0) return [];
-    return buildTeamSeriesOnGrid(
+    const built = buildTeamSeriesOnGrid(
       chartCtx.grid,
       chartCtx.roundId,
       race,
@@ -251,7 +261,13 @@ export function PnlChart() {
       chartCtx.valueOffset,
       maxIdx,
     );
+    return built.map((s) => ({
+      ...s,
+      latestValue: s.points[s.points.length - 1]?.value,
+    }));
   }, [chartCtx, race, livePrices, maxIdx]);
+
+  const rankedLegend = useMemo(() => withRankNumbers(series), [series]);
 
   const allValues = useMemo(
     () => series.flatMap((s) => s.points.map((p) => p.value)),
@@ -507,7 +523,10 @@ export function PnlChart() {
       )}
 
       <div className="mt-4 flex flex-wrap gap-x-3 gap-y-2 border-t border-white/10 pt-3">
-        {series.map((s) => {
+        <p className="mb-1 w-full text-[10px] font-medium uppercase tracking-wider text-zinc-600">
+          即時排名 · {race === "main" ? "主賽" : "副賽"}盈虧由高至低
+        </p>
+        {rankedLegend.map((s) => {
           const isActive = active === s.team.id;
           const isPinned = pinned === s.team.id;
           const latest = s.points[s.points.length - 1];
@@ -525,7 +544,7 @@ export function PnlChart() {
               }`}
             >
               <span className="size-2.5 rounded-full" style={{ backgroundColor: s.team.color }} />
-              <span className="font-medium">{s.badge}</span>
+              <span className="min-w-[1.5rem] font-bold text-zinc-200">{s.rankBadge}</span>
               <span className="max-w-[7rem] truncate">{s.team.name}</span>
               {latest ? (
                 <span className={latest.value >= 0 ? "text-emerald-400" : "text-rose-400"}>

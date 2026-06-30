@@ -454,34 +454,42 @@ export type TeamSeasonStats = {
   /** 各站積分加總（不含暖身週） */
   points: number;
   roundsPlayed: number;
-  /** 各站主賽、副賽盈虧 % 加總；無資料為 undefined */
-  cumulativeReturnPct?: number;
+  /** 各站主賽盈虧 % 加總（不含暖身週） */
+  cumulativeMainReturnPct?: number;
+  /** 各站副賽漲跌 % 加總（不含暖身週） */
+  cumulativeSprintReturnPct?: number;
 };
 
 export function getTeamSeasonStats(teamId: string): TeamSeasonStats {
   const team = getTeam(teamId)!;
   const entries = ROUND_ENTRIES.filter((e) => e.teamId === teamId && e.roundId !== "warmup");
   const points = entries.reduce((sum, e) => sum + (e.points ?? 0), 0);
-  const returns: number[] = [];
+  const mainReturns: number[] = [];
+  const sprintReturns: number[] = [];
   for (const e of entries) {
     const m = mainScore(e);
     const s = sprintScore(e);
-    if (typeof m === "number") returns.push(m);
-    if (typeof s === "number") returns.push(s);
+    if (typeof m === "number") mainReturns.push(m);
+    if (typeof s === "number") sprintReturns.push(s);
   }
   return {
     team,
     points,
     roundsPlayed: entries.length,
-    cumulativeReturnPct:
-      returns.length > 0 ? returns.reduce((sum, v) => sum + v, 0) : undefined,
+    cumulativeMainReturnPct:
+      mainReturns.length > 0 ? mainReturns.reduce((sum, v) => sum + v, 0) : undefined,
+    cumulativeSprintReturnPct:
+      sprintReturns.length > 0 ? sprintReturns.reduce((sum, v) => sum + v, 0) : undefined,
   };
 }
 
 export function getSeasonStandings(): TeamSeasonStats[] {
   return TEAMS.map((t) => getTeamSeasonStats(t.id)).sort((a, b) => {
+    const mainDiff =
+      (b.cumulativeMainReturnPct ?? -Infinity) - (a.cumulativeMainReturnPct ?? -Infinity);
+    if (mainDiff !== 0) return mainDiff;
     if (b.points !== a.points) return b.points - a.points;
-    return (b.cumulativeReturnPct ?? -Infinity) - (a.cumulativeReturnPct ?? -Infinity);
+    return 0;
   });
 }
 

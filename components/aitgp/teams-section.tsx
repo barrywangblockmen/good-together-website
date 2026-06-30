@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { TeamCard } from "@/components/aitgp/team-card";
 import { useAitgpPrices } from "@/components/aitgp/use-aitgp-prices";
 import { formatSnapshotLabel } from "@/lib/aitgp-chart";
-import { ROUNDS, TEAMS, getRoundEntry, getTeamSeasonStats } from "@/lib/aitgp";
+import { ROUNDS, TEAMS, getRoundEntry, getTeamSeasonStats, mainScore } from "@/lib/aitgp";
 
 type TeamLayout = "1" | "2" | "3" | "list";
 
@@ -74,6 +74,25 @@ export function TeamsSection() {
   const reduce = useReducedMotion();
   const round = ROUNDS.find((r) => r.id === activeId)!;
   const hasAnyData = TEAMS.some((t) => getRoundEntry(t.id, activeId));
+
+  const rankedTeams = useMemo(() => {
+    const items = TEAMS.map((team) => {
+      const entry = getRoundEntry(team.id, activeId);
+      const score = entry ? mainScore(entry, snapshot?.prices) : undefined;
+      return { team, score };
+    });
+    const ranked = items
+      .filter((x) => typeof x.score === "number")
+      .sort((a, b) => b.score! - a.score!);
+    const unranked = items.filter((x) => typeof x.score !== "number");
+    return [
+      ...ranked.map((x, i) => ({
+        ...x,
+        badge: `#${i + 1}`,
+      })),
+      ...unranked.map((x) => ({ ...x, badge: "—" })),
+    ];
+  }, [activeId, snapshot?.prices]);
 
   return (
     <div>
@@ -167,12 +186,12 @@ export function TeamsSection() {
           </div>
 
           <div className={`mt-4 ${layoutGridClass(layout)}`}>
-            {TEAMS.map((team, i) => (
+            {rankedTeams.map(({ team, badge }) => (
               <TeamCard
                 key={team.id}
                 team={team}
                 stats={getTeamSeasonStats(team.id)}
-                badge={`#${i + 1}`}
+                badge={badge}
                 roundId={activeId}
                 variant={layout === "list" ? "list" : "card"}
                 livePrices={snapshot?.prices}

@@ -44,7 +44,15 @@ function twseExCh(symbol: string): string {
   return `${ch}_${symbol}.tw`;
 }
 
-type TwseRow = { c?: string; z?: string; y?: string };
+type TwseRow = { c?: string; z?: string; y?: string; a?: string; b?: string };
+
+function parseLadderTop(ladder?: string): number | undefined {
+  if (!ladder) return undefined;
+  const top = ladder.split("_")[0]?.replace(/,/g, "");
+  if (!top || top === "-") return undefined;
+  const n = Number(top);
+  return Number.isFinite(n) && n > 0 ? n : undefined;
+}
 
 function parseTwsePrice(row: TwseRow): number | undefined {
   const z = row.z?.replace(/,/g, "");
@@ -52,6 +60,14 @@ function parseTwsePrice(row: TwseRow): number | undefined {
     const n = Number(z);
     if (Number.isFinite(n) && n > 0) return n;
   }
+
+  // MIS 盤中常回 z=-，改以最佳買賣價中間價估算
+  const ask = parseLadderTop(row.a);
+  const bid = parseLadderTop(row.b);
+  if (ask != null && bid != null) return (ask + bid) / 2;
+  if (ask != null) return ask;
+  if (bid != null) return bid;
+
   const y = row.y?.replace(/,/g, "");
   if (y) {
     const n = Number(y);
@@ -95,7 +111,10 @@ async function fetchTwsePrices(symbols: string[]): Promise<AitgpPriceQuote[]> {
   const res = await fetch(
     `https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=${encodeURIComponent(exCh)}`,
     {
-      headers: { Accept: "application/json" },
+      headers: {
+        Accept: "application/json",
+        Referer: "https://mis.twse.com.tw/stock/index.jsp",
+      },
       cache: "no-store",
     },
   );

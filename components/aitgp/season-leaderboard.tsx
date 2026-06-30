@@ -18,14 +18,15 @@ export function SeasonLeaderboard({ standings }: { standings: TeamSeasonStats[] 
   return (
     <div className="overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/60">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[520px] border-collapse text-left text-sm">
+        <table className="w-full min-w-[640px] border-collapse text-left text-sm">
           <thead>
             <tr className="border-b border-white/10 text-[11px] uppercase tracking-wider text-zinc-400">
               <th className="px-4 py-3 font-medium">名次</th>
               <th className="px-4 py-3 font-medium">車隊</th>
               <th className="px-4 py-3 font-medium">車手</th>
               <th className="px-4 py-3 text-right font-medium">累計積分</th>
-              <th className="px-4 py-3 text-right font-medium">累計盈虧</th>
+              <th className="px-4 py-3 text-right font-medium">累計盈虧（主賽）</th>
+              <th className="px-4 py-3 text-right font-medium">累計漲跌（副賽）</th>
             </tr>
           </thead>
           <tbody>
@@ -73,8 +74,15 @@ export function SeasonLeaderboard({ standings }: { standings: TeamSeasonStats[] 
                   </td>
                   <td className="px-4 py-3 text-zinc-400">{s.team.driver}</td>
                   <td className="px-4 py-3 text-right font-bold text-white">{s.points}</td>
-                  <td className={`px-4 py-3 text-right font-semibold ${pnlClass(s.cumulativeReturnPct)}`}>
-                    {formatPct(s.cumulativeReturnPct)}
+                  <td
+                    className={`px-4 py-3 text-right font-semibold ${pnlClass(s.cumulativeMainReturnPct)}`}
+                  >
+                    {formatPct(s.cumulativeMainReturnPct)}
+                  </td>
+                  <td
+                    className={`px-4 py-3 text-right font-semibold ${pnlClass(s.cumulativeSprintReturnPct)}`}
+                  >
+                    {formatPct(s.cumulativeSprintReturnPct)}
                   </td>
                 </tr>
               );

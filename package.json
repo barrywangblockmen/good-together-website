@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && node scripts/sync-standalone-assets.mjs",
     "start": "next start",
     "lint": "eslint",
     "photos:prepare": "node scripts/prepare-activity-photos.mjs",

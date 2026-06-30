@@ -176,6 +176,20 @@ export function formatSnapshotLabel(iso: string): string {
   return formatHourLabel(new Date(iso));
 }
 
+/** 距離下一個台北時間整點的毫秒數 */
+export function msUntilNextTaipeiHour(now = new Date()): number {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Taipei",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(now);
+  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value ?? 0);
+  const min = get("minute");
+  const sec = get("second");
+  return Math.max(1000, (60 - min) * 60_000 - sec * 1000);
+}
+
 /** 以台北時間對齊快照（相容舊版 UTC hourKey） */
 export function buildSnapshotByHourKey(
   snapshots: HourlyRoundSnapshot[] | undefined,
