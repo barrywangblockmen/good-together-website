@@ -155,9 +155,9 @@ async function fetchQuotes(): Promise<AitgpLatestPrices> {
   for (const [symbol, price] of Object.entries(taifexPrices)) {
     prices[symbol] = price;
   }
-  // 手動覆寫優先（期貨所 API 失敗或需人工校正時）
+  // 手動價僅在自動報價失敗時補位
   for (const [symbol, price] of Object.entries(manualPrices)) {
-    prices[symbol] = price;
+    if (prices[symbol] == null) prices[symbol] = price;
   }
 
   const unsupported = allSymbols.filter((s) => prices[s] == null);
