@@ -368,7 +368,7 @@ export const ROUND_ENTRIES: RoundEntry[] = [
     roundId: "warmup",
     main: [
       { symbol: "MTX", label: "小台指期", direction: "long", entryPrice: "45558", taifexContract: "202607" },
-      { symbol: "07w1 44500P", label: "小台 Put", direction: "short", entryPrice: "255" },
+      { symbol: "07w1 44500P", label: "小台 Put", direction: "short", entryPrice: "255", exitPrice: "0.2" },
     ],
     sprint: [
       { symbol: "MTX", label: "小台指", entryPrice: "45558", taifexContract: "202607" },

@@ -76,20 +76,25 @@ function formatLivePrice(n: number): string {
 
 function LegPriceResult({
   entryPrice,
+  exitPrice,
   resultLabel,
   resultPct,
   livePrice,
 }: {
   entryPrice?: string;
+  exitPrice?: string;
   resultLabel: "盈虧" | "漲跌";
   resultPct?: number;
   livePrice?: number;
 }) {
+  const closed = exitPrice != null && exitPrice !== "";
   return (
     <span className="flex shrink-0 flex-col items-end gap-0.5 text-xs sm:flex-row sm:items-center sm:gap-2">
       <span className="flex items-center gap-2">
         {entryPrice ? <span className="text-zinc-500">@ {entryPrice}</span> : null}
-        {livePrice != null ? (
+        {closed ? (
+          <span className="text-amber-400/90">平 {exitPrice}</span>
+        ) : livePrice != null ? (
           <span className="text-zinc-600">現 {formatLivePrice(livePrice)}</span>
         ) : null}
       </span>
@@ -123,9 +128,10 @@ function MainLegRow({ leg, livePrice }: { leg: MainLeg; livePrice?: number }) {
       </span>
       <LegPriceResult
         entryPrice={leg.entryPrice}
+        exitPrice={leg.exitPrice}
         resultLabel="盈虧"
-        resultPct={mainLegReturnPct(leg, livePrice)}
-        livePrice={livePrice}
+        resultPct={mainLegReturnPct(leg, leg.exitPrice ? undefined : livePrice)}
+        livePrice={leg.exitPrice ? undefined : livePrice}
       />
     </li>
   );
@@ -145,9 +151,10 @@ function SprintLegRow({ leg, livePrice }: { leg: SprintLeg; livePrice?: number }
       </span>
       <LegPriceResult
         entryPrice={leg.entryPrice}
+        exitPrice={leg.exitPrice}
         resultLabel="漲跌"
-        resultPct={sprintLegReturnPct(leg, livePrice)}
-        livePrice={livePrice}
+        resultPct={sprintLegReturnPct(leg, leg.exitPrice ? undefined : livePrice)}
+        livePrice={leg.exitPrice ? undefined : livePrice}
       />
     </li>
   );
