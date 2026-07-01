@@ -186,6 +186,9 @@ export const TEAMS: Team[] = [
     name: "賺錢要排隊",
     driver: "Ken",
     color: "#4CD964",
+    blurb: "ドリフト魂 — RX-7 FD3S",
+    logo: "/aitgp/teams/money-queue/logo.png",
+    car: "/aitgp/teams/money-queue/car.png",
   },
   {
     id: "one-more-order",
