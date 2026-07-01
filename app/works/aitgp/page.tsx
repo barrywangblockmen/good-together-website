@@ -11,6 +11,7 @@ import {
   POINTS_TABLE,
   RACE_FORMATS,
   ROUND_RULES,
+  RULES_DISCLAIMER,
   ROUNDS,
   SEASON_KICKOFF,
   SEASON_LABEL,
@@ -156,6 +157,15 @@ export default function AitgpPage() {
                 </li>
               ))}
             </ul>
+          </Reveal>
+
+          <Reveal>
+            <div className="mt-5 rounded-2xl border border-white/10 bg-zinc-900/40 px-5 py-4">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                {RULES_DISCLAIMER.title}
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-zinc-500">{RULES_DISCLAIMER.body}</p>
+            </div>
           </Reveal>
 
           <div className="mt-5 grid gap-5 md:grid-cols-3">
