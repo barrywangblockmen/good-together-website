@@ -213,6 +213,9 @@ export const TEAMS: Team[] = [
     name: "你說的都隊",
     driver: "Muriel",
     color: "#5B8DEF",
+    blurb: "NI SHUO DE DOU TEAM",
+    logo: "/aitgp/teams/youre-right/logo.png",
+    car: "/aitgp/teams/youre-right/car.png",
   },
 ];
 
