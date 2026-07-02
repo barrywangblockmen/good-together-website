@@ -93,7 +93,16 @@ function pickSessionPrice(rows: SessionRow[]): number | undefined {
   return regular?.price ?? after?.price;
 }
 
-export async function fetchMtxPrice(contract: string, date = new Date()): Promise<number | undefined> {
+/** 月契 202607 在日資料可能以 202607W2 等週別欄位出現 */
+function mtxContractMatches(colContract: string | undefined, contractKey: string): boolean {
+  const c = colContract?.trim() ?? "";
+  if (!c || !contractKey) return false;
+  if (c === contractKey) return true;
+  if (/^\d{6}$/.test(contractKey) && c.startsWith(contractKey)) return true;
+  return false;
+}
+
+async function fetchMtxPriceOnDate(contract: string, date: Date): Promise<number | undefined> {
   const qd = taifexQueryDate(date);
   const contractKey = contract.trim();
   const url =
@@ -107,13 +116,23 @@ export async function fetchMtxPrice(contract: string, date = new Date()): Promis
     if (!line.trim()) continue;
     const cols = parseCsvLine(line);
     if (cols[1] !== "MTX") continue;
-    if (cols[2]?.trim() !== contractKey) continue;
+    if (!mtxContractMatches(cols[2], contractKey)) continue;
     const price = Number(cols[6]?.replace(/,/g, ""));
     const session = cols[17] ?? "一般";
     if (Number.isFinite(price) && price > 0) rows.push({ session, price });
   }
 
   return pickSessionPrice(rows);
+}
+
+export async function fetchMtxPrice(contract: string, date = new Date()): Promise<number | undefined> {
+  // 盤中當日可能尚無收盤列；往前找最近有資料之日（最多 5 天）
+  for (let offset = 0; offset <= 4; offset++) {
+    const d = new Date(date.getTime() - offset * 86_400_000);
+    const price = await fetchMtxPriceOnDate(contract, d);
+    if (price != null) return price;
+  }
+  return undefined;
 }
 
 export async function fetchTxoPrice(

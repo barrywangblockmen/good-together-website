@@ -141,11 +141,12 @@ async function fetchQuotes(): Promise<AitgpLatestPrices> {
   const twSymbols = tracked.filter(isTwStock);
   const binanceSymbols = tracked.filter((s) => !isTwStock(s));
 
-  const [binanceQuotes, twseQuotes, taifexPrices, manualPrices] = await Promise.all([
+  const [binanceQuotes, twseQuotes, taifexPrices, manualPrices, previous] = await Promise.all([
     fetchBinanceFuturesPrices(binanceSymbols),
     fetchTwsePrices(twSymbols),
     fetchTaifexPrices(collectTaifexTargets()),
     readManualPrices(),
+    readLatestPrices(),
   ]);
 
   const prices: Record<string, number> = {};
@@ -158,6 +159,14 @@ async function fetchQuotes(): Promise<AitgpLatestPrices> {
   // 手動價僅在自動報價失敗時補位
   for (const [symbol, price] of Object.entries(manualPrices)) {
     if (prices[symbol] == null) prices[symbol] = price;
+  }
+  // 期交所盤中無收盤列時，沿用上一筆成功抓到的價（避免 MTX 整段消失）
+  if (previous?.prices) {
+    for (const sym of allSymbols) {
+      if (prices[sym] == null && previous.prices[sym] != null) {
+        prices[sym] = previous.prices[sym];
+      }
+    }
   }
 
   const unsupported = allSymbols.filter((s) => prices[s] == null);
