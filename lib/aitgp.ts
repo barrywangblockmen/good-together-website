@@ -160,6 +160,9 @@ export const TEAMS: Team[] = [
     name: "Project D車隊",
     driver: "Eli",
     color: "#00D4FF",
+    blurb: "PROJECT D — Formula Electric",
+    logo: "/aitgp/teams/project-d/logo.png",
+    car: "/aitgp/teams/project-d/car.png",
   },
   {
     id: "redrock-racing",
