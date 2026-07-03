@@ -63,7 +63,7 @@ ssh -i "$SSH_KEY_PATH" "${SSH_USER}@${SSH_HOST}" "
     CRON_MARKER=\"# aitgp-price-refresh\"
     CRON_HOURLY=\"0 * * * * /bin/bash -lc 'cd $REMOTE_APP_DIR && set -a && source .env.production && set +a && /usr/bin/node scripts/aitgp-fetch-prices.mjs >> $REMOTE_APP_DIR/data/aitgp-cron.log 2>&1'\"
     CRON_DAILY=\"30 13 * * * /bin/bash -lc 'cd $REMOTE_APP_DIR && set -a && source .env.production && set +a && /usr/bin/node scripts/aitgp-fetch-prices.mjs >> $REMOTE_APP_DIR/data/aitgp-cron.log 2>&1'\"
-    (crontab -l 2>/dev/null | grep -Fv \"\$CRON_MARKER\" | grep -Fv 'aitgp-fetch-prices' | grep -Fv '^CRON_TZ=Asia/Taipei$' || true; echo \"CRON_TZ=Asia/Taipei\"; echo \"\$CRON_MARKER\"; echo \"\$CRON_HOURLY\"; echo \"\$CRON_DAILY\") | crontab -
+    (crontab -l 2>/dev/null | grep -Fv \"\$CRON_MARKER\" | grep -Fv 'aitgp-fetch-prices' | grep -Fv 'aitgp-hourly-prices' | grep -Fv '^CRON_TZ=Asia/Taipei$' || true; echo \"CRON_TZ=Asia/Taipei\"; echo \"\$CRON_MARKER\"; echo \"\$CRON_HOURLY\"; echo \"\$CRON_DAILY\") | crontab -
     if [[ -n \"\${AITGP_CRON_SECRET:-}\" ]]; then
       sleep 3
       /usr/bin/node scripts/aitgp-fetch-prices.mjs || true
