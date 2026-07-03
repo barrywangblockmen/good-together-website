@@ -15,6 +15,7 @@ import {
 } from "@/lib/aitgp-chart";
 import {
   TEAMS,
+  getDefaultRoundId,
   getRoundEntry,
   mainScore,
   sprintScore,
@@ -183,11 +184,6 @@ function buildTeamSeriesOnGrid(
   });
 }
 
-function defaultScope(): ChartScope {
-  const racing = CHART_TAB_ROUNDS.find((r) => r.status === "racing");
-  return racing?.id ?? CHART_TAB_ROUNDS[0]?.id ?? "cumulative";
-}
-
 function scopeTitle(scope: ChartScope): string {
   if (scope === "cumulative") return "賽季累計盈虧";
   const round = CHART_TAB_ROUNDS.find((r) => r.id === scope);
@@ -197,7 +193,7 @@ function scopeTitle(scope: ChartScope): string {
 export function PnlChart() {
   const { snapshot, loading } = useAitgpPrices();
   const [mounted, setMounted] = useState(false);
-  const [scope, setScope] = useState<ChartScope>(defaultScope);
+  const [scope, setScope] = useState<ChartScope>("warmup");
   const [race, setRace] = useState<RaceType>("main");
   const [hovered, setHovered] = useState<string | null>(null);
   const [pinned, setPinned] = useState<string | null>(null);
@@ -205,6 +201,7 @@ export function PnlChart() {
 
   useEffect(() => {
     setMounted(true);
+    setScope(getDefaultRoundId());
   }, []);
 
   const history = snapshot?.chartHistory ?? {};
@@ -298,7 +295,11 @@ export function PnlChart() {
       : (CHART_TAB_ROUNDS.find((r) => r.id === scope)?.tradingPeriod ?? "");
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-zinc-900/60 p-4 md:p-6">
+    <div
+      className="rounded-2xl border border-white/10 bg-zinc-900/60 p-4 md:p-6"
+      data-aitgp-section="chart"
+      data-aitgp-round={mounted ? scope : undefined}
+    >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <span className="text-xs font-semibold text-zinc-300">{scopeTitle(scope)}</span>

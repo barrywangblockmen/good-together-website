@@ -313,6 +313,62 @@ export const ROUNDS: Round[] = [
   },
 ];
 
+const AITGP_SEASON_YEAR = 2026;
+
+/** 解析賽期字串（例 7/6（一）– 7/17（五））為台北時間起迄日 */
+export function parseRoundTradingDates(
+  tradingPeriod: string,
+  year = AITGP_SEASON_YEAR,
+): { start: Date; end: Date } | null {
+  const m = tradingPeriod.match(/(\d{1,2})\/(\d{1,2}).*?[–-]\s*(\d{1,2})\/(\d{1,2})/);
+  if (!m) return null;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const start = new Date(
+    `${year}-${pad(Number(m[1]))}-${pad(Number(m[2]))}T00:00:00+08:00`,
+  );
+  const end = new Date(
+    `${year}-${pad(Number(m[3]))}-${pad(Number(m[4]))}T23:59:59.999+08:00`,
+  );
+  return { start, end };
+}
+
+function taipeiStartOfDay(now = new Date()): Date {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Taipei",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "01";
+  return new Date(`${get("year")}-${get("month")}-${get("day")}T00:00:00+08:00`);
+}
+
+/** 依台北日期決定預設站次（賽期內 → 該站；空檔 → 下一站；已結束 → 最近一站） */
+export function getDefaultRoundId(now = new Date()): string {
+  const today = taipeiStartOfDay(now);
+
+  for (const round of ROUNDS) {
+    const range = parseRoundTradingDates(round.tradingPeriod);
+    if (!range) continue;
+    if (today >= range.start && today <= range.end) return round.id;
+  }
+
+  let next: { id: string; start: Date } | null = null;
+  for (const round of ROUNDS) {
+    const range = parseRoundTradingDates(round.tradingPeriod);
+    if (!range || range.start <= today) continue;
+    if (!next || range.start < next.start) next = { id: round.id, start: range.start };
+  }
+  if (next) return next.id;
+
+  for (let i = ROUNDS.length - 1; i >= 0; i--) {
+    const range = parseRoundTradingDates(ROUNDS[i].tradingPeriod);
+    if (range && today > range.end) return ROUNDS[i].id;
+  }
+
+  return ROUNDS[0]?.id ?? "warmup";
+}
+
 // 各站、各隊成績。賽季開跑後手動填入；暖身週 GP0 已開倉，盈虧待結算。
 export const ROUND_ENTRIES: RoundEntry[] = [
   {

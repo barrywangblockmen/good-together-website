@@ -1,11 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { TeamCard } from "@/components/aitgp/team-card";
 import { useAitgpPrices } from "@/components/aitgp/use-aitgp-prices";
 import { formatSnapshotLabel, AITGP_PRICE_UPDATE_NOTE } from "@/lib/aitgp-chart";
-import { ROUNDS, TEAMS, getRoundEntry, getTeamSeasonStats, mainScore } from "@/lib/aitgp";
+import { ROUNDS, TEAMS, getDefaultRoundId, getRoundEntry, getTeamSeasonStats, mainScore } from "@/lib/aitgp";
 
 type TeamLayout = "1" | "2" | "3" | "list";
 
@@ -68,10 +68,14 @@ function layoutGridClass(layout: TeamLayout) {
 }
 
 export function TeamsSection() {
-  const [activeId, setActiveId] = useState(ROUNDS[0]?.id ?? "");
+  const [activeId, setActiveId] = useState(ROUNDS[0]?.id ?? "warmup");
   const [layout, setLayout] = useState<TeamLayout>("list");
   const { snapshot, loading: pricesLoading, error: pricesError } = useAitgpPrices();
   const reduce = useReducedMotion();
+
+  useEffect(() => {
+    setActiveId(getDefaultRoundId());
+  }, []);
   const round = ROUNDS.find((r) => r.id === activeId)!;
   const hasAnyData = TEAMS.some((t) => getRoundEntry(t.id, activeId));
 
@@ -95,7 +99,7 @@ export function TeamsSection() {
   }, [activeId, snapshot?.prices]);
 
   return (
-    <div>
+    <div data-aitgp-section="teams" data-aitgp-round={activeId}>
       <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-2">
         {ROUNDS.map((r) => {
           const active = r.id === activeId;
