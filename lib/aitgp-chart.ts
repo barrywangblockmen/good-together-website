@@ -21,6 +21,10 @@ export type HourSlot = {
 };
 
 export const AITGP_PRICE_TTL_SECONDS = 3600;
+/** 額外固定更新：台北時間每日 13:30（午盤後補抓） */
+export const AITGP_DAILY_REFRESH_HOUR = 13;
+export const AITGP_DAILY_REFRESH_MINUTE = 30;
+export const AITGP_PRICE_UPDATE_NOTE = "每小時整點與每日 13:30";
 export const SEASON_YEAR = 2026;
 /** 圖表時間軸：週一至週五、每日 9:00–21:00（台灣時間，一小時一格） */
 export const CHART_HOUR_START = 9;
@@ -188,6 +192,47 @@ export function msUntilNextTaipeiHour(now = new Date()): number {
   const min = get("minute");
   const sec = get("second");
   return Math.max(1000, (60 - min) * 60_000 - sec * 1000);
+}
+
+function taipeiYmdHms(now = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Taipei",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(now);
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "00";
+  return {
+    y: get("year"),
+    m: get("month"),
+    d: get("day"),
+    h: Number(get("hour")),
+    min: Number(get("minute")),
+    sec: Number(get("second")),
+  };
+}
+
+/** 距離下一個台北時間 13:30 的毫秒數 */
+export function msUntilNextTaipeiDailyRefresh(now = new Date()): number {
+  const { y, m, d, h, min, sec } = taipeiYmdHms(now);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const todayTarget = new Date(
+    `${y}-${m}-${d}T${pad(AITGP_DAILY_REFRESH_HOUR)}:${pad(AITGP_DAILY_REFRESH_MINUTE)}:00+08:00`,
+  );
+  const afterTarget =
+    h > AITGP_DAILY_REFRESH_HOUR ||
+    (h === AITGP_DAILY_REFRESH_HOUR && min >= AITGP_DAILY_REFRESH_MINUTE);
+  const target = afterTarget ? new Date(todayTarget.getTime() + 86_400_000) : todayTarget;
+  return Math.max(1000, target.getTime() - now.getTime() - sec * 1000);
+}
+
+/** 距離下一次排程更新（整點或每日 13:30，取較近者） */
+export function msUntilNextPriceRefresh(now = new Date()): number {
+  return Math.min(msUntilNextTaipeiHour(now), msUntilNextTaipeiDailyRefresh(now));
 }
 
 /** 以台北時間對齊快照（相容舊版 UTC hourKey） */

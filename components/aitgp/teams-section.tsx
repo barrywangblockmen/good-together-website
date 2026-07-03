@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { TeamCard } from "@/components/aitgp/team-card";
 import { useAitgpPrices } from "@/components/aitgp/use-aitgp-prices";
-import { formatSnapshotLabel } from "@/lib/aitgp-chart";
+import { formatSnapshotLabel, AITGP_PRICE_UPDATE_NOTE } from "@/lib/aitgp-chart";
 import { ROUNDS, TEAMS, getRoundEntry, getTeamSeasonStats, mainScore } from "@/lib/aitgp";
 
 type TeamLayout = "1" | "2" | "3" | "list";
@@ -149,7 +149,7 @@ export function TeamsSection() {
               <p>顯示方式</p>
               {snapshot?.updatedAt ? (
                 <p className="mt-0.5 text-[10px] text-zinc-600" suppressHydrationWarning>
-                  行情更新 {formatSnapshotLabel(snapshot.updatedAt)}（每小時）
+                  行情更新 {formatSnapshotLabel(snapshot.updatedAt)}（{AITGP_PRICE_UPDATE_NOTE}）
                 </p>
               ) : pricesLoading ? (
                 <p className="mt-0.5 text-[10px] text-zinc-600">行情載入中…</p>

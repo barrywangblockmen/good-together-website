@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { AitgpPriceSnapshot } from "@/lib/aitgp-chart";
-import { msUntilNextTaipeiHour } from "@/lib/aitgp-chart";
+import { msUntilNextPriceRefresh } from "@/lib/aitgp-chart";
 
 export function useAitgpPrices() {
   const [snapshot, setSnapshot] = useState<AitgpPriceSnapshot | null>(null);
@@ -34,7 +34,7 @@ export function useAitgpPrices() {
       timeoutId = window.setTimeout(() => {
         void refresh();
         scheduleNext();
-      }, msUntilNextTaipeiHour());
+      }, msUntilNextPriceRefresh());
     };
     scheduleNext();
 

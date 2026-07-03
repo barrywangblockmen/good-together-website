@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
+  AITGP_PRICE_UPDATE_NOTE,
   CHART_TAB_ROUNDS,
   buildRoundHourGrid,
   buildSnapshotByHourKey,
@@ -303,7 +304,7 @@ export function PnlChart() {
           <span className="text-xs font-semibold text-zinc-300">{scopeTitle(scope)}</span>
           {snapshot?.updatedAt ? (
             <p className="mt-0.5 text-[10px] text-zinc-600" suppressHydrationWarning>
-              行情每小時更新 · 最近 {formatSnapshotLabel(snapshot.updatedAt)}
+              行情更新（{AITGP_PRICE_UPDATE_NOTE}）· 最近 {formatSnapshotLabel(snapshot.updatedAt)}
               {periodHint ? ` · 賽期 ${periodHint}` : ""}
             </p>
           ) : loading || !mounted ? (
