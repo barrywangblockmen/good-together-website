@@ -5,6 +5,7 @@ import { TeamsSection } from "@/components/aitgp/teams-section";
 import { createMetadata } from "@/lib/metadata";
 import {
   ANNUAL_AWARDS,
+  ANNUAL_AWARDS_TOTAL,
   INSTRUMENT_RULES,
   MAIN_PRIZES,
   POINTS_NOTE,
@@ -168,7 +169,7 @@ export default function AitgpPage() {
             </div>
           </Reveal>
 
-          <div className="mt-5 grid gap-5 md:grid-cols-3">
+          <div className="mt-5 grid gap-5 md:grid-cols-2">
             <Reveal>
               <div className="h-full rounded-2xl border border-white/10 bg-zinc-900/60 p-6">
                 <h3 className="text-sm font-semibold text-white">每站主賽獎金</h3>
@@ -201,21 +202,49 @@ export default function AitgpPage() {
                 </div>
               </div>
             </Reveal>
-
-            <Reveal delay={0.1}>
-              <div className="h-full rounded-2xl border border-white/10 bg-zinc-900/60 p-6">
-                <h3 className="text-sm font-semibold text-white">年度獎項</h3>
-                <ul className="mt-3 space-y-2">
-                  {ANNUAL_AWARDS.map((a) => (
-                    <li key={a.title} className="text-sm">
-                      <span className="font-medium text-zinc-200">{a.title}</span>
-                      <span className="ml-1 text-xs text-zinc-500">· {a.desc}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </Reveal>
           </div>
+
+          <Reveal>
+            <div className="mt-5 overflow-hidden rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-zinc-900/80 to-rose-950/40 p-6 md:p-7">
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.25em] text-amber-400/90">
+                    Season Finale
+                  </p>
+                  <h3 className="mt-1 text-lg font-bold text-amber-100 md:text-xl">年度大獎</h3>
+                </div>
+                <p className="text-xs text-zinc-400">爭奪年度冠軍，榮耀屬於最強車隊</p>
+              </div>
+              <ul className="mt-5 divide-y divide-white/10 overflow-hidden rounded-xl border border-white/10 bg-black/30">
+                {ANNUAL_AWARDS.map((a) => (
+                  <li
+                    key={a.title}
+                    className={`flex items-center justify-between gap-4 px-4 py-3 text-sm ${
+                      a.highlight ? "bg-gradient-to-r from-amber-500/20 to-transparent" : ""
+                    }`}
+                  >
+                    <span
+                      className={
+                        a.highlight ? "font-semibold text-amber-200" : "font-medium text-zinc-200"
+                      }
+                    >
+                      {a.title}
+                    </span>
+                    <span
+                      className={`shrink-0 font-semibold ${
+                        a.highlight ? "text-amber-300" : "text-zinc-300"
+                      }`}
+                    >
+                      {a.reward}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-4 rounded-lg bg-rose-600/90 px-4 py-2.5 text-center text-sm font-semibold text-white">
+                合計獎勵：{ANNUAL_AWARDS_TOTAL}
+              </p>
+            </div>
+          </Reveal>
 
           <Reveal>
             <div className="mt-8 rounded-2xl border border-white/10 bg-zinc-900/40 p-6">

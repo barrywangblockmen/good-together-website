@@ -81,10 +81,22 @@ export const MAIN_PRIZES = [
 // 賽季積分表（每站給分，累積年度成績）
 export const POINTS_TABLE = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1] as const;
 
-export const ANNUAL_AWARDS = [
-  { title: "年度車隊冠軍", desc: "總積分最高" },
-  { title: "最佳 AI 車隊設計", desc: "Logo、賽車、故事設定最佳" },
-] as const;
+/** 賽季終點年度大獎（合計 200 USDT + MacBook Air M1） */
+export const ANNUAL_AWARDS: {
+  title: string;
+  reward: string;
+  highlight?: boolean;
+}[] = [
+  { title: "年度車手冠軍", reward: "MacBook Air M1 + 50 USDT", highlight: true },
+  { title: "年度總積分第二名", reward: "50 USDT" },
+  { title: "年度總積分第三名", reward: "30 USDT" },
+  { title: "年度總積分第四名", reward: "20 USDT" },
+  { title: "年度總積分第五名", reward: "10 USDT" },
+  { title: "最佳 AI 車隊設計", reward: "20 USDT" },
+  { title: "最佳 Review", reward: "20 USDT" },
+];
+
+export const ANNUAL_AWARDS_TOTAL = "200 USDT + MacBook Air M1";
 
 export const RACE_FORMATS = [
   {
