@@ -47,6 +47,22 @@ export default function AitgpPage() {
             <p className="mt-5 max-w-3xl text-pretty text-base leading-relaxed text-zinc-300 md:text-lg">
               把 F1 賽車的「站次、車隊、積分」精神帶進交易場。每位參賽者用 AI 打造自己的車隊，每一站選定標的、真實下單、固定回顧。比的不只是賺賠，更是交易紀律、選股眼光與作品呈現力。
             </p>
+            <div className="mt-7 flex flex-wrap items-center gap-4">
+              <a
+                href="https://kart.gtclub.tw"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group inline-flex items-center gap-3 rounded-full bg-white px-6 py-3 text-sm font-black tracking-wide text-zinc-950 transition hover:-translate-y-0.5 hover:bg-amber-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0b0e]"
+              >
+                進入 Formula Kart
+                <span aria-hidden className="transition-transform group-hover:translate-x-0.5">
+                  ↗
+                </span>
+              </a>
+              <span className="text-xs font-medium tracking-wide text-zinc-500">
+                桌機鍵盤 · 最多 10 人同樂
+              </span>
+            </div>
             <p className="mt-7 text-xs text-zinc-500">
               賽季開跑：{SEASON_KICKOFF}　·　主辦：GT Club
             </p>
