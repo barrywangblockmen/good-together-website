@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { Reveal } from "@/components/motion/reveal";
+import { ResearchReportSkill } from "@/components/works/research-report-skill";
+import { getSession, isMember } from "@/lib/auth-session";
 import { createMetadata } from "@/lib/metadata";
 
 export const metadata = createMetadata({
@@ -15,6 +17,7 @@ const works = [
     title: "AI 賦能企業轉型計畫",
     description:
       "協助中小企業導入 AI 工具，提升營運效率與決策品質，並整合 AI 會計系統與 AI 會議整合系統，將帳務管理、會議摘要與行動追蹤串成一套可落地的轉型流程。",
+    showResearchSkill: true,
   },
   {
     tag: "Web3",
@@ -28,9 +31,12 @@ const works = [
     description:
       "邀請業界專家分享永續發展策略，促進跨領域交流與合作，讓企業與社群在成長的同時，也能實踐長期的社會與環境價值。",
   },
-];
+] as const;
 
-export default function WorksPage() {
+export default async function WorksPage() {
+  const session = await getSession();
+  const member = isMember(session);
+
   return (
     <div>
       <section className="mesh-bg border-b border-edge">
@@ -88,6 +94,9 @@ export default function WorksPage() {
                   </span>
                   <h2 className="mt-4 text-4xl font-semibold text-ink md:text-4xl">{w.title}</h2>
                   <p className="mt-3 text-lg leading-relaxed text-muted">{w.description}</p>
+                  {"showResearchSkill" in w && w.showResearchSkill ? (
+                    <ResearchReportSkill isMember={member} />
+                  ) : null}
                 </article>
               </Reveal>
             ))}
