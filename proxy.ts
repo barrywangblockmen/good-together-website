@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import {
+  getSessionFromRequest,
+  isAdmin,
+  isMember,
+} from "@/lib/auth-cookie";
 
 /** 常見自動化掃描路徑：直接拒絕以降低噪音與資訊外洩風險 */
 const DENIED_PREFIXES = [
@@ -36,10 +41,49 @@ function isDeniedPath(pathname: string): boolean {
   return false;
 }
 
+function requiresMember(pathname: string): boolean {
+  return pathname === "/research" || pathname.startsWith("/research/");
+}
+
+function requiresAdmin(pathname: string): boolean {
+  return pathname === "/admin" || pathname.startsWith("/admin/");
+}
+
+function loginRedirect(
+  request: NextRequest,
+  pathname: string,
+  error?: string
+) {
+  const loginUrl = request.nextUrl.clone();
+  loginUrl.pathname = "/login";
+  loginUrl.search = "";
+  loginUrl.searchParams.set("next", pathname);
+  if (error) loginUrl.searchParams.set("error", error);
+  return NextResponse.redirect(loginUrl);
+}
+
 export function proxy(request: NextRequest) {
   if (isDeniedPath(request.nextUrl.pathname)) {
     return new NextResponse(null, { status: 404 });
   }
+
+  const { pathname } = request.nextUrl;
+
+  if (requiresAdmin(pathname)) {
+    const session = getSessionFromRequest(request);
+    if (!session) {
+      return loginRedirect(request, pathname);
+    }
+    if (!isAdmin(session)) {
+      return loginRedirect(request, pathname, "forbidden");
+    }
+  } else if (requiresMember(pathname)) {
+    const session = getSessionFromRequest(request);
+    if (!isMember(session)) {
+      return loginRedirect(request, pathname);
+    }
+  }
+
   return NextResponse.next();
 }
 

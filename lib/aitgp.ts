@@ -157,6 +157,53 @@ export const POINTS_NOTE =
 export const SEASON_LABEL = "2026 賽季";
 export const SEASON_KICKOFF = "2026 年 6 月 29 日（建隊週）";
 
+/** 特定站次覆寫賽車圖（GP0 等預設仍用 team.car） */
+export const TEAM_ROUND_CAR_OVERRIDES: Record<string, Partial<Record<string, string>>> = {
+  "strawberry-berry": {
+    r01: "/aitgp/teams/strawberry-berry/car-r01.png",
+  },
+  "project-d": {
+    r01: "/aitgp/teams/project-d/car-r01.png",
+  },
+  "redrock-racing": {
+    r01: "/aitgp/teams/redrock-racing/car-r01.png",
+  },
+  "princess-yuanying": {
+    r01: "/aitgp/teams/princess-yuanying/car-r01.png",
+  },
+  "money-queue": {
+    r01: "/aitgp/teams/money-queue/car-r01.png",
+  },
+};
+
+/** 特定站次覆寫 Logo（GP0 等預設仍用 team.logo） */
+export const TEAM_ROUND_LOGO_OVERRIDES: Record<string, Partial<Record<string, string>>> = {
+  "princess-yuanying": {
+    r01: "/aitgp/teams/princess-yuanying/logo-r01.png",
+  },
+};
+
+export function getTeamCarSrc(team: Team, roundId?: string): string | undefined {
+  if (roundId) {
+    const override = TEAM_ROUND_CAR_OVERRIDES[team.id]?.[roundId];
+    if (override) return override;
+    // R02–R08 沿用 R01 賽車圖
+    if (/^r0[2-8]$/.test(roundId)) {
+      const r01Car = TEAM_ROUND_CAR_OVERRIDES[team.id]?.r01;
+      if (r01Car) return r01Car;
+    }
+  }
+  return team.car;
+}
+
+export function getTeamLogoSrc(team: Team, roundId?: string): string | undefined {
+  if (roundId) {
+    const override = TEAM_ROUND_LOGO_OVERRIDES[team.id]?.[roundId];
+    if (override) return override;
+  }
+  return team.logo;
+}
+
 export const TEAMS: Team[] = [
   {
     id: "strawberry-berry",
@@ -251,7 +298,8 @@ export const ROUNDS: Round[] = [
     circuit: "Red Bull Ring",
     tradingPeriod: "7/6（一）– 7/17（五）",
     settleDate: "7/20（一）結算",
-    status: "upcoming",
+    status: "settled",
+    note: "已於 7/18（六）08:00 結算完成，盈虧鎖定不再更新。",
   },
   {
     id: "r02",
@@ -261,7 +309,7 @@ export const ROUNDS: Round[] = [
     circuit: "Hungaroring",
     tradingPeriod: "7/27（一）– 8/7（五）",
     settleDate: "8/10（一）結算",
-    status: "upcoming",
+    status: "racing",
   },
   {
     id: "r03",
@@ -492,6 +540,208 @@ export const ROUND_ENTRIES: RoundEntry[] = [
       { symbol: "6669", label: "緯穎", entryPrice: "4335", exitPrice: "5265" },
     ],
   },
+  // R01 奧地利站（7/6–7/17）
+  {
+    teamId: "princess-yuanying",
+    roundId: "r01",
+    main: [
+      { symbol: "3037", label: "欣興", direction: "long", entryPrice: "913", exitPrice: "794" },
+      { symbol: "3711", label: "日月光", direction: "long", entryPrice: "682", exitPrice: "614" },
+    ],
+    sprint: [
+      { symbol: "8027", label: "鈦昇", entryPrice: "254", exitPrice: "215.5" },
+      { symbol: "2337", label: "旺宏", entryPrice: "146.5", exitPrice: "125" },
+    ],
+    points: 20,
+  },
+  {
+    teamId: "one-more-order",
+    roundId: "r01",
+    main: [
+      { symbol: "DOGE", direction: "short", entryPrice: "0.07764", exitPrice: "0.07227" },
+      { symbol: "PEPE", direction: "short", entryPrice: "0.000002753", exitPrice: "0.000002599" },
+    ],
+    sprint: [
+      { symbol: "2330", label: "台積電", entryPrice: "2465", exitPrice: "2290" },
+      { symbol: "2408", label: "南亞科", entryPrice: "428", exitPrice: "395.5" },
+    ],
+    points: 40,
+  },
+  {
+    teamId: "money-queue",
+    roundId: "r01",
+    main: [
+      { symbol: "4991", label: "環宇-KY", direction: "long", entryPrice: "548", exitPrice: "360" },
+      { symbol: "8271", label: "宇瞻", direction: "long", entryPrice: "196", exitPrice: "190" },
+    ],
+    sprint: [
+      { symbol: "4991", label: "環宇-KY", entryPrice: "548", exitPrice: "360" },
+      { symbol: "8271", label: "宇瞻", entryPrice: "196", exitPrice: "190" },
+    ],
+    points: 10,
+  },
+  {
+    teamId: "project-d",
+    roundId: "r01",
+    main: [
+      { symbol: "AAVE", direction: "long", entryPrice: "88.64", exitPrice: "89.68" },
+      { symbol: "NEAR", direction: "long", entryPrice: "2.005", exitPrice: "1.922" },
+    ],
+    sprint: [
+      { symbol: "2409", label: "友達", entryPrice: "30.4", exitPrice: "25.8" },
+      { symbol: "AAVE", entryPrice: "88.64", exitPrice: "89.68" },
+    ],
+    points: 36,
+  },
+  {
+    teamId: "redrock-racing",
+    roundId: "r01",
+    main: [
+      { symbol: "8255", label: "朋程", direction: "long", entryPrice: "200", exitPrice: "150.5" },
+      { symbol: "5536", label: "聖暉", direction: "long", entryPrice: "1435", exitPrice: "1140" },
+    ],
+    sprint: [
+      { symbol: "2059", label: "川湖", entryPrice: "8000", exitPrice: "7890" },
+      { symbol: "SPCX", entryPrice: "165.95", exitPrice: "123.95" },
+    ],
+    points: 14,
+  },
+  {
+    teamId: "guinea-pig",
+    roundId: "r01",
+    main: [
+      { symbol: "6669", label: "緯穎", direction: "long", entryPrice: "5325", exitPrice: "4620" },
+      { symbol: "2330", label: "台積電", direction: "long", entryPrice: "2465", exitPrice: "2290" },
+    ],
+    sprint: [
+      { symbol: "2382", label: "廣達", entryPrice: "377", exitPrice: "325.5" },
+      { symbol: "3037", label: "欣興", entryPrice: "898", exitPrice: "794" },
+    ],
+    points: 27,
+  },
+  {
+    teamId: "strawberry-berry",
+    roundId: "r01",
+    main: [
+      { symbol: "HYPE", direction: "long", entryPrice: "72.195", exitPrice: "59.742" },
+      { symbol: "LIT", direction: "long", entryPrice: "2.5399", exitPrice: "2.2925" },
+    ],
+    sprint: [
+      { symbol: "ONDO", entryPrice: "0.3296", exitPrice: "0.3734" },
+      { symbol: "UNI", entryPrice: "3.171", exitPrice: "3.616" },
+    ],
+    points: 35,
+  },
+  {
+    teamId: "youre-right",
+    roundId: "r01",
+    main: [
+      { symbol: "2308", label: "台達電", direction: "long", entryPrice: "2120", exitPrice: "1740" },
+      { symbol: "6620", label: "漢達", direction: "long", entryPrice: "104", exitPrice: "86.5" },
+    ],
+    sprint: [
+      { symbol: "2308", label: "台達電", entryPrice: "2120", exitPrice: "1740" },
+      { symbol: "6620", label: "漢達", entryPrice: "104", exitPrice: "86.5" },
+    ],
+    points: 14,
+  },
+  // R02 匈牙利站（7/27–8/7）
+  {
+    teamId: "strawberry-berry",
+    roundId: "r02",
+    main: [
+      { symbol: "XAG", direction: "short", entryPrice: "57.79" },
+      { symbol: "LIT", direction: "long", entryPrice: "2.2117" },
+    ],
+    sprint: [
+      { symbol: "ONDO", entryPrice: "0.3455" },
+      { symbol: "UNI", entryPrice: "3.519" },
+    ],
+  },
+  {
+    teamId: "money-queue",
+    roundId: "r02",
+    main: [
+      { symbol: "4991", label: "環宇-KY", direction: "long", entryPrice: "346" },
+      { symbol: "3231", label: "緯創", direction: "long", entryPrice: "142" },
+    ],
+    sprint: [
+      { symbol: "4991", label: "環宇-KY", entryPrice: "346" },
+      { symbol: "3231", label: "緯創", entryPrice: "142" },
+    ],
+  },
+  {
+    teamId: "youre-right",
+    roundId: "r02",
+    main: [
+      { symbol: "2330", label: "台積電", direction: "long", entryPrice: "2300" },
+      { symbol: "2303", label: "聯電", direction: "long", entryPrice: "141" },
+    ],
+    sprint: [
+      { symbol: "2330", label: "台積電", entryPrice: "2300" },
+      { symbol: "2303", label: "聯電", entryPrice: "141" },
+    ],
+  },
+  {
+    teamId: "princess-yuanying",
+    roundId: "r02",
+    main: [
+      { symbol: "2313", label: "華通", direction: "long", entryPrice: "205" },
+      { symbol: "3189", label: "景碩", direction: "long", entryPrice: "694" },
+    ],
+    sprint: [
+      { symbol: "2454", label: "聯發科", entryPrice: "3355" },
+      { symbol: "3189", label: "景碩", entryPrice: "694" },
+    ],
+  },
+  {
+    teamId: "redrock-racing",
+    roundId: "r02",
+    main: [
+      { symbol: "BTC", direction: "long", entryPrice: "64750" },
+      { symbol: "2327", label: "國巨", direction: "long", entryPrice: "630" },
+    ],
+    sprint: [
+      { symbol: "SPCX", entryPrice: "123.99" },
+      { symbol: "5536", label: "聖暉", entryPrice: "1140" },
+    ],
+  },
+  {
+    teamId: "project-d",
+    roundId: "r02",
+    main: [
+      { symbol: "2308", label: "台達電", direction: "long", entryPrice: "1720" },
+      { symbol: "AAVE", direction: "long", entryPrice: "89.71" },
+    ],
+    sprint: [
+      { symbol: "NEAR", entryPrice: "1.93" },
+      { symbol: "AAVE", entryPrice: "89.71" },
+    ],
+  },
+  {
+    teamId: "one-more-order",
+    roundId: "r02",
+    main: [
+      { symbol: "MUUSDT", direction: "short", entryPrice: "860.88" },
+      { symbol: "00632R", label: "0050反一", direction: "long", entryPrice: "10.47" },
+    ],
+    sprint: [
+      { symbol: "3374", label: "精材", entryPrice: "349.5" },
+      { symbol: "2408", label: "南亞科", entryPrice: "396" },
+    ],
+  },
+  {
+    teamId: "guinea-pig",
+    roundId: "r02",
+    main: [
+      { symbol: "6669", label: "緯穎", direction: "long", entryPrice: "4725" },
+      { symbol: "2330", label: "台積電", direction: "long", entryPrice: "2300" },
+    ],
+    sprint: [
+      { symbol: "2382", label: "廣達", entryPrice: "331.5" },
+      { symbol: "3037", label: "欣興", entryPrice: "778" },
+    ],
+  },
 ];
 
 /** 盈虧走勢圖用賽程（不含建隊週 GP0 暖身賽） */
@@ -607,10 +857,10 @@ export function getTeamSeasonStats(teamId: string): TeamSeasonStats {
 
 export function getSeasonStandings(): TeamSeasonStats[] {
   return TEAMS.map((t) => getTeamSeasonStats(t.id)).sort((a, b) => {
+    if (b.points !== a.points) return b.points - a.points;
     const mainDiff =
       (b.cumulativeMainReturnPct ?? -Infinity) - (a.cumulativeMainReturnPct ?? -Infinity);
     if (mainDiff !== 0) return mainDiff;
-    if (b.points !== a.points) return b.points - a.points;
     return 0;
   });
 }

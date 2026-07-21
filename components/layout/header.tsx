@@ -1,14 +1,35 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import { NAV_LINKS } from "@/lib/constants";
 import { LogoLink } from "@/components/layout/logo";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { Button } from "@/components/ui/button";
+import type { WhitelistRole } from "@/lib/schemas/auth";
 
-export function Header() {
+export type HeaderSession = {
+  email: string;
+  role: WhitelistRole;
+} | null;
+
+type NavItem = {
+  href: string;
+  label: string;
+  highlight?: boolean;
+};
+
+export function Header({ session }: { session: HeaderSession }) {
   const [open, setOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const router = useRouter();
+
+  const links = useMemo(() => {
+    return [...NAV_LINKS] satisfies NavItem[];
+  }, []);
+
+  const isAdmin = session?.role === "admin";
 
   useEffect(() => {
     if (!open) return;
@@ -26,12 +47,24 @@ export function Header() {
     };
   }, [open]);
 
+  async function handleLogout() {
+    setLoggingOut(true);
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      router.refresh();
+      router.push("/");
+    } finally {
+      setLoggingOut(false);
+      setOpen(false);
+    }
+  }
+
   return (
     <header className="sticky top-0 z-40 border-b border-edge/80 bg-page/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 md:px-6">
         <LogoLink />
         <nav className="hidden items-center gap-1 md:flex" aria-label="主選單">
-          {NAV_LINKS.map((item) => (
+          {links.map((item) => (
             <Link
               key={item.href}
               href={item.href}
@@ -47,6 +80,32 @@ export function Header() {
         </nav>
         <div className="flex items-center gap-2">
           <ThemeToggle />
+          {isAdmin ? (
+            <Link
+              href="/admin"
+              className="inline-flex size-10 items-center justify-center rounded-full border border-edge bg-surface text-ink transition hover:border-primary-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              aria-label="管理員後台"
+              title="管理員後台"
+              onClick={() => setOpen(false)}
+            >
+              <AdminIcon />
+            </Link>
+          ) : null}
+          {session ? (
+            <Button
+              type="button"
+              variant="outline"
+              className="hidden md:inline-flex"
+              loading={loggingOut}
+              onClick={() => void handleLogout()}
+            >
+              登出
+            </Button>
+          ) : (
+            <Button href="/login" variant="outline" className="hidden md:inline-flex">
+              會員登入
+            </Button>
+          )}
           <Button href="/join" variant="primary" className="hidden md:inline-flex">
             加入協會
           </Button>
@@ -72,7 +131,7 @@ export function Header() {
           aria-modal="true"
         >
           <nav className="mx-auto flex max-w-6xl flex-col gap-1 px-4 py-4" aria-label="手機主選單">
-            {NAV_LINKS.map((item) => (
+            {links.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -86,6 +145,26 @@ export function Header() {
                 {item.label}
               </Link>
             ))}
+            {session ? (
+              <Button
+                type="button"
+                variant="outline"
+                className="mt-2 w-full justify-center"
+                loading={loggingOut}
+                onClick={() => void handleLogout()}
+              >
+                登出
+              </Button>
+            ) : (
+              <Button
+                href="/login"
+                variant="outline"
+                className="mt-2 w-full justify-center"
+                onClick={() => setOpen(false)}
+              >
+                會員登入
+              </Button>
+            )}
             <Button
               href="/join"
               variant="primary"
@@ -123,6 +202,25 @@ function CloseIcon() {
         strokeWidth="1.8"
         strokeLinecap="round"
       />
+    </svg>
+  );
+}
+
+function AdminIcon() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.6.84 1 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" />
     </svg>
   );
 }

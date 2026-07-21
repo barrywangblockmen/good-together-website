@@ -2,6 +2,8 @@ import Image from "next/image";
 import type { MainLeg, SprintLeg, Team, TeamSeasonStats } from "@/lib/aitgp";
 import {
   getRoundEntry,
+  getTeamCarSrc,
+  getTeamLogoSrc,
   mainLegReturnPct,
   mainScore,
   sprintLegReturnPct,
@@ -160,12 +162,21 @@ function SprintLegRow({ leg, livePrice }: { leg: SprintLeg; livePrice?: number }
   );
 }
 
-function TeamLogo({ team, badge }: { team: Team; badge: string }) {
+function TeamLogo({
+  team,
+  badge,
+  roundId,
+}: {
+  team: Team;
+  badge: string;
+  roundId?: string;
+}) {
+  const logoSrc = getTeamLogoSrc(team, roundId);
   return (
     <div className="relative size-12 shrink-0 overflow-hidden rounded-full border border-white/15 bg-black/50">
-      {team.logo ? (
+      {logoSrc ? (
         <Image
-          src={team.logo}
+          src={logoSrc}
           alt={`${team.name} Logo`}
           fill
           quality={75}
@@ -184,17 +195,20 @@ function TeamCarImage({
   badge,
   className,
   sizes,
+  roundId,
 }: {
   team: Team;
   badge: string;
   className?: string;
   sizes: string;
+  roundId?: string;
 }) {
+  const carSrc = getTeamCarSrc(team, roundId);
   return (
     <div className={`relative bg-gradient-to-br from-black/60 to-zinc-800/40 ${className ?? ""}`}>
-      {team.car ? (
+      {carSrc ? (
         <Image
-          src={team.car}
+          src={carSrc}
           alt={`${team.name} 賽車`}
           fill
           quality={75}
@@ -307,13 +321,14 @@ export function TeamCard({
           <TeamCarImage
             team={team}
             badge={badge}
+            roundId={roundId}
             className="aspect-[16/9] w-full shrink-0 md:w-44 lg:w-52"
             sizes="(min-width: 768px) 208px, 100vw"
           />
           <div className="flex min-w-0 flex-1 flex-col">
             <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-start">
               <div className="flex min-w-0 flex-1 items-start gap-3">
-                <TeamLogo team={team} badge={badge} />
+                <TeamLogo team={team} badge={badge} roundId={roundId} />
                 <div className="min-w-0 flex-1">
                   <h3 className="truncate text-base font-semibold text-white">{team.name}</h3>
                   <p className="text-xs text-zinc-400">車手 · {team.driver}</p>
@@ -350,12 +365,13 @@ export function TeamCard({
       <TeamCarImage
         team={team}
         badge={badge}
+        roundId={roundId}
         className="aspect-[16/9] w-full"
         sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
       />
 
       <div className="flex items-start gap-3 p-5">
-        <TeamLogo team={team} badge={badge} />
+        <TeamLogo team={team} badge={badge} roundId={roundId} />
         <div className="min-w-0 flex-1">
           <h3 className="truncate text-base font-semibold text-white">{team.name}</h3>
           <p className="text-xs text-zinc-400">車手 · {team.driver}</p>

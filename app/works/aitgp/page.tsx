@@ -49,7 +49,7 @@ export default function AitgpPage() {
             </p>
             <div className="mt-7 flex flex-wrap items-center gap-4">
               <a
-                href="https://kart.gtclub.tw"
+                href="/formula-kart/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group inline-flex items-center gap-3 rounded-full bg-white px-6 py-3 text-sm font-black tracking-wide text-zinc-950 transition hover:-translate-y-0.5 hover:bg-amber-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0b0e]"

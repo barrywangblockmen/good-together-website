@@ -84,7 +84,8 @@ npm run start
 - `SUBMISSIONS_FILE`：表單落地檔案（JSONL）
 - `VISIT_NOTIFY_ENABLED`：是否啟用造訪通知
 - `RESEND_API_KEY`：SMTP 不可用時的備援通道
-
+- `AUTH_SECRET`：會員 session 簽章密鑰（Magic Link 登入必填）
+- `WHITELIST_FILE` / `AUTH_TOKENS_FILE`：白名單與登入 token 檔案路徑
 ## 部署現況（EC2）
 
 目前正式部署模式：

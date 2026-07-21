@@ -5,9 +5,10 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { TeamCard } from "@/components/aitgp/team-card";
 import { useAitgpPrices } from "@/components/aitgp/use-aitgp-prices";
 import { formatSnapshotLabel, AITGP_PRICE_UPDATE_NOTE } from "@/lib/aitgp-chart";
-import { ROUNDS, TEAMS, getDefaultRoundId, getRoundEntry, getTeamSeasonStats, mainScore } from "@/lib/aitgp";
+import { ROUNDS, TEAMS, getDefaultRoundId, getRoundEntry, getTeamSeasonStats, mainScore, sprintScore } from "@/lib/aitgp";
 
 type TeamLayout = "1" | "2" | "3" | "list";
+type TeamSort = "main" | "sprint" | "points" | "name";
 
 const LAYOUT_OPTIONS: { id: TeamLayout; label: string }[] = [
   { id: "1", label: "一列一張" },
@@ -15,6 +16,26 @@ const LAYOUT_OPTIONS: { id: TeamLayout; label: string }[] = [
   { id: "3", label: "一列三張" },
   { id: "list", label: "條列式" },
 ];
+
+const SORT_OPTIONS: { id: TeamSort; label: string }[] = [
+  { id: "main", label: "主賽盈虧" },
+  { id: "sprint", label: "副賽漲跌" },
+  { id: "points", label: "累計積分" },
+  { id: "name", label: "車隊名稱" },
+];
+
+function SortIcon({ active }: { active: boolean }) {
+  return (
+    <svg viewBox="0 0 16 16" className={`size-3.5 ${active ? "text-amber-300" : "opacity-50"}`} aria-hidden>
+      <path
+        d="M5 3.5h6M5 8h4M5 12.5h6"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
 
 function LayoutIcon({ layout }: { layout: TeamLayout }) {
   const stroke = "currentColor";
@@ -70,6 +91,7 @@ function layoutGridClass(layout: TeamLayout) {
 export function TeamsSection() {
   const [activeId, setActiveId] = useState(ROUNDS[0]?.id ?? "warmup");
   const [layout, setLayout] = useState<TeamLayout>("list");
+  const [sortBy, setSortBy] = useState<TeamSort>("main");
   const { snapshot, loading: pricesLoading, error: pricesError } = useAitgpPrices();
   const reduce = useReducedMotion();
 
@@ -82,21 +104,32 @@ export function TeamsSection() {
   const rankedTeams = useMemo(() => {
     const items = TEAMS.map((team) => {
       const entry = getRoundEntry(team.id, activeId);
-      const score = entry ? mainScore(entry, snapshot?.prices) : undefined;
-      return { team, score };
+      const main = entry ? mainScore(entry, snapshot?.prices) : undefined;
+      const sprint = entry ? sprintScore(entry, snapshot?.prices) : undefined;
+      const seasonPoints = getTeamSeasonStats(team.id).points;
+      return { team, main, sprint, seasonPoints };
     });
-    const ranked = items
-      .filter((x) => typeof x.score === "number")
-      .sort((a, b) => b.score! - a.score!);
-    const unranked = items.filter((x) => typeof x.score !== "number");
+
+    const scoreFor = (item: (typeof items)[0]) => {
+      if (sortBy === "main") return item.main;
+      if (sortBy === "sprint") return item.sprint;
+      if (sortBy === "points") return item.seasonPoints;
+      return undefined;
+    };
+
+    const ranked = [...items]
+      .filter((x) => sortBy === "name" || typeof scoreFor(x) === "number")
+      .sort((a, b) => {
+        if (sortBy === "name") return a.team.name.localeCompare(b.team.name, "zh-Hant");
+        return scoreFor(b)! - scoreFor(a)!;
+      });
+    const unranked = items.filter((x) => sortBy !== "name" && typeof scoreFor(x) !== "number");
+
     return [
-      ...ranked.map((x, i) => ({
-        ...x,
-        badge: `#${i + 1}`,
-      })),
+      ...ranked.map((x, i) => ({ ...x, badge: `#${i + 1}` })),
       ...unranked.map((x) => ({ ...x, badge: "—" })),
     ];
-  }, [activeId, snapshot?.prices]);
+  }, [activeId, snapshot?.prices, sortBy]);
 
   return (
     <div data-aitgp-section="teams" data-aitgp-round={activeId}>
@@ -148,9 +181,36 @@ export function TeamsSection() {
             ) : null}
           </div>
 
-          <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-            <div className="text-xs text-zinc-500">
-              <p>顯示方式</p>
+          <div className="mt-5 flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="text-xs text-zinc-500">排序方式</p>
+              <div
+                className="mt-1.5 inline-flex flex-wrap rounded-lg border border-white/10 bg-black/20 p-1"
+                role="group"
+                aria-label="車隊排序方式"
+              >
+                {SORT_OPTIONS.map((opt) => {
+                  const active = sortBy === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setSortBy(opt.id)}
+                      className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition ${
+                        active
+                          ? "bg-gradient-to-r from-rose-500/90 to-amber-500/90 text-white"
+                          : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200"
+                      }`}
+                    >
+                      <SortIcon active={active} />
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-zinc-500">顯示方式</p>
               {snapshot?.updatedAt ? (
                 <p className="mt-0.5 text-[10px] text-zinc-600" suppressHydrationWarning>
                   行情更新 {formatSnapshotLabel(snapshot.updatedAt)}（{AITGP_PRICE_UPDATE_NOTE}）
@@ -160,32 +220,32 @@ export function TeamsSection() {
               ) : pricesError ? (
                 <p className="mt-0.5 text-[10px] text-amber-600/80">行情暫不可用</p>
               ) : null}
-            </div>
-            <div
-              className="inline-flex rounded-lg border border-white/10 bg-black/20 p-1"
-              role="group"
-              aria-label="車隊卡片顯示方式"
-            >
-              {LAYOUT_OPTIONS.map((opt) => {
-                const active = layout === opt.id;
-                return (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    title={opt.label}
-                    aria-label={opt.label}
-                    aria-pressed={active}
-                    onClick={() => setLayout(opt.id)}
-                    className={`rounded-md p-2 transition ${
-                      active
-                        ? "bg-white/10 text-white"
-                        : "text-zinc-500 hover:bg-white/5 hover:text-zinc-200"
-                    }`}
-                  >
-                    <LayoutIcon layout={opt.id} />
-                  </button>
-                );
-              })}
+              <div
+                className="mt-1.5 inline-flex rounded-lg border border-white/10 bg-black/20 p-1"
+                role="group"
+                aria-label="車隊卡片顯示方式"
+              >
+                {LAYOUT_OPTIONS.map((opt) => {
+                  const active = layout === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      title={opt.label}
+                      aria-label={opt.label}
+                      aria-pressed={active}
+                      onClick={() => setLayout(opt.id)}
+                      className={`rounded-md p-2 transition ${
+                        active
+                          ? "bg-white/10 text-white"
+                          : "text-zinc-500 hover:bg-white/5 hover:text-zinc-200"
+                      }`}
+                    >
+                      <LayoutIcon layout={opt.id} />
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 

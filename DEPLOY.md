@@ -44,6 +44,10 @@ npm run build
 | `SUBSCRIBERS_FILE` | 電子報訂閱名單路徑，例如 `/var/www/good-together/data/subscribers.jsonl` |
 | `NEWSLETTER_API_SECRET` | 電子報群發 API 的 Bearer token（供 Cowork 或本機腳本呼叫） |
 | `VISIT_NOTIFY_ENABLED` | 選填：`false` 時關閉造訪寄信 |
+| `AUTH_SECRET` | **必填**：會員 session cookie 簽章密鑰（建議 `openssl rand -base64 32`，至少 16 字元） |
+| `WHITELIST_FILE` | 選填：登入白名單 JSONL 路徑，預設 `/var/www/good-together/data/whitelist.jsonl` |
+| `AUTH_TOKENS_FILE` | 選填：Magic Link token 檔案路徑，預設 `/var/www/good-together/data/auth-tokens.jsonl` |
+| `AUTH_SESSION_DAYS` | 選填：session 有效天數，預設 `30` |
 
 ## 4. Nginx 反向代理（安全強化範例）
 
@@ -160,7 +164,50 @@ sudo chown -R ubuntu:ubuntu /var/www/good-together/data
 tail -n 20 /var/www/good-together/data/subscribers.jsonl
 ```
 
-## 7.2 Cowork 群發電子報
+## 7.2 會員白名單登入
+
+網站支援 **Email Magic Link** 登入：僅白名單中的 Email 可收到登入信並進入會員專區（`/research`）與管理員後台（`/admin`）。
+
+### 環境變數
+
+部署前請設定：
+
+```bash
+# 產生簽章密鑰（勿提交至 Git）
+openssl rand -base64 32
+```
+
+```bash
+AUTH_SECRET=<上方產生的字串>
+# 選填；未設則使用下列預設路徑
+WHITELIST_FILE=/var/www/good-together/data/whitelist.jsonl
+AUTH_TOKENS_FILE=/var/www/good-together/data/auth-tokens.jsonl
+AUTH_SESSION_DAYS=30
+```
+
+請確保 `data/` 目錄可寫入（與表單／電子報相同）。
+
+### Bootstrap 管理員
+
+當 `WHITELIST_FILE` 不存在或為空時，系統會自動寫入初始管理員：
+
+- Email：`wahao888@gmail.com`
+- 角色：`admin`
+
+之後請以該帳號登入後台 →「白名單管理」新增其他會員。**不可刪除最後一位管理員。**
+
+### 資料備份
+
+請將下列檔案納入定期備份（與 `submissions.jsonl`、`subscribers.jsonl` 一併備份）：
+
+- `whitelist.jsonl`
+- `auth-tokens.jsonl`（短期 token，可選）
+
+```bash
+tail -n 20 /var/www/good-together/data/whitelist.jsonl
+```
+
+## 7.3 Cowork 群發電子報
 
 本地 Claude Cowork 生成 HTML 後，可透過腳本呼叫受保護的 Send API：
 

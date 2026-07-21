@@ -18,7 +18,12 @@ export type AitgpPriceQuote = {
   source: "binance-futures" | "twse" | "taifex";
 };
 
-const TWSE_OTC = new Set(["8255", "5536"]);
+const TWSE_OTC = new Set(["8255", "5536", "4991", "6620", "8027", "3374"]);
+
+/** Binance 合約代號與進場價單位不一致時需換算（例：1000PEPEUSDT → PEPE 現價 ÷ 1000） */
+const BINANCE_FUTURES_ALIASES: Record<string, { symbol: string; scale: number }> = {
+  PEPE: { symbol: "1000PEPEUSDT", scale: 1000 },
+};
 
 let refreshPromise: Promise<AitgpPriceSnapshot> | null = null;
 
@@ -28,7 +33,7 @@ function isWithinTtl(updatedAt: string): boolean {
 }
 
 function isTwStock(symbol: string): boolean {
-  return /^\d{4}$/.test(symbol);
+  return /^\d{4}$/.test(symbol) || /^00[\dA-Z]{4}$/i.test(symbol);
 }
 
 function isTaifexSymbol(symbol: string): boolean {
@@ -77,7 +82,15 @@ function parseTwsePrice(row: TwseRow): number | undefined {
 }
 
 function toBinanceFuturesSymbol(symbol: string): string {
+  const alias = BINANCE_FUTURES_ALIASES[symbol];
+  if (alias) return alias.symbol;
   return symbol.endsWith("USDT") ? symbol : `${symbol}USDT`;
+}
+
+function fromBinanceFuturesSymbol(futuresSymbol: string, entrySymbol: string): number | undefined {
+  const alias = BINANCE_FUTURES_ALIASES[entrySymbol];
+  if (alias && futuresSymbol === alias.symbol) return alias.scale;
+  return 1;
 }
 
 async function fetchBinanceFuturesPrices(symbols: string[]): Promise<AitgpPriceQuote[]> {
@@ -96,7 +109,8 @@ async function fetchBinanceFuturesPrices(symbols: string[]): Promise<AitgpPriceQ
     if (!need.has(row.symbol)) continue;
     const entrySymbol = symbols.find((s) => toBinanceFuturesSymbol(s) === row.symbol);
     if (!entrySymbol) continue;
-    const price = Number(row.price);
+    const scale = fromBinanceFuturesSymbol(row.symbol, entrySymbol) ?? 1;
+    const price = Number(row.price) / scale;
     if (!Number.isFinite(price)) continue;
     out.push({ symbol: entrySymbol, price, source: "binance-futures" });
   }

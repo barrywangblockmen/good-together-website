@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { getSession } from "@/lib/auth-session";
 import { defaultOpenGraph, getSiteUrl } from "@/lib/metadata";
 import { SITE_NAME, SITE_TAGLINE } from "@/lib/constants";
 
@@ -30,11 +31,16 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await getSession();
+  const headerSession = session
+    ? { email: session.email, role: session.role }
+    : null;
+
   return (
     <html
       lang="zh-Hant"
@@ -49,7 +55,7 @@ export default function RootLayout({
           >
             跳到主要內容
           </a>
-          <Header />
+          <Header session={headerSession} />
           <main id="main" className="flex-1">
             {children}
           </main>
