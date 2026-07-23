@@ -768,6 +768,8 @@ export function getAllEntrySymbols(): string[] {
     for (const leg of entry.main) symbols.add(leg.symbol);
     for (const leg of entry.sprint) symbols.add(leg.symbol);
   }
+  // GT投研目標價榜共用這套行情服務；ETH 尚未出現在 AITGP 喊單中，需額外追蹤。
+  symbols.add("ETH");
   return [...symbols];
 }
 

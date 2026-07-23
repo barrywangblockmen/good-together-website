@@ -85,6 +85,36 @@ export default async function WorksPage() {
               </div>
             </Link>
           </Reveal>
+          <Reveal>
+            <Link
+              href="/works/research-gp"
+              className="group relative mb-8 block overflow-hidden rounded-2xl border border-cyan-500/30 bg-gradient-to-r from-[#081a21] via-[#0d2329] to-[#151d20] px-6 py-7 shadow-sm transition hover:border-cyan-300/60 md:px-8"
+            >
+              <span
+                className="pointer-events-none absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-amber-400/15 to-transparent"
+                aria-hidden
+              />
+              <div className="relative flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <span className="inline-flex rounded-full bg-cyan-300 px-3 py-1 text-xs font-semibold text-slate-950">
+                    NEW · 每日動態排名
+                  </span>
+                  <h2 className="mt-3 text-2xl font-semibold text-white md:text-3xl">
+                    GT投研目標價大賞
+                  </h2>
+                  <p className="mt-2 max-w-2xl text-sm leading-relaxed text-cyan-50/75 md:text-base">
+                    8 位研究員、48 次目標價機會。每天以最新市場價格重算誤差，看看誰暫居最準預測王。
+                  </p>
+                </div>
+                <span className="inline-flex items-center gap-2 rounded-full border border-cyan-300/40 px-4 py-2 text-sm font-medium text-white transition group-hover:bg-cyan-300/10">
+                  查看今日榜單
+                  <span aria-hidden className="transition group-hover:translate-x-0.5">
+                    →
+                  </span>
+                </span>
+              </div>
+            </Link>
+          </Reveal>
           <div className="space-y-6">
             {works.map((w, i) => (
               <Reveal key={w.title} delay={0.06 * i}>
