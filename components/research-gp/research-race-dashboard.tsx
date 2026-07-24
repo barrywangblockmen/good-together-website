@@ -14,6 +14,8 @@ import {
 import { useResearchRacePrices } from "@/components/research-gp/use-research-race-prices";
 
 type HorizonFilter = "all" | ResearchHorizon;
+type RankingMode = "live" | "settled";
+type PeriodFilter = "all" | ResearchReport["roundId"];
 
 type RankedOpportunity = {
   report: ResearchReport;
@@ -28,9 +30,34 @@ type RankedParticipant = RankedOpportunity & {
 };
 
 const FILTERS: { id: HorizonFilter; label: string }[] = [
-  { id: "all", label: "綜合最佳" },
+  { id: "all", label: "全部期限" },
   { id: 3, label: "3 個月" },
   { id: 6, label: "6 個月" },
+];
+
+const RANKING_MODES: {
+  id: RankingMode;
+  label: string;
+  description: string;
+}[] = [
+  {
+    id: "live",
+    label: "即時追蹤榜",
+    description: "依最新市場價格動態估算，呈現目前領先態勢",
+  },
+  {
+    id: "settled",
+    label: "正式結算榜",
+    description: "僅納入已到期並完成價格封存的有效預測",
+  },
+];
+
+const PERIOD_FILTERS: { id: PeriodFilter; label: string }[] = [
+  { id: "all", label: "全部期別" },
+  ...RESEARCH_REPORT_ROUNDS.map((round) => ({
+    id: round.id,
+    label: round.monthLabel.replace("2026 年 ", ""),
+  })),
 ];
 
 function formatPrice(value: number, report: ResearchReport) {
@@ -124,6 +151,8 @@ function RankBadge({ rank, color }: { rank: number; color: string }) {
 }
 
 export function ResearchRaceDashboard() {
+  const [rankingMode, setRankingMode] = useState<RankingMode>("live");
+  const [period, setPeriod] = useState<PeriodFilter>("all");
   const [horizon, setHorizon] = useState<HorizonFilter>("all");
   const { snapshot, loading, error, refresh } = useResearchRacePrices();
   const prices = useMemo(() => snapshot?.prices ?? {}, [snapshot]);
@@ -131,7 +160,12 @@ export function ResearchRaceDashboard() {
   const opportunities = useMemo(() => {
     return RESEARCH_REPORTS.flatMap((report) =>
       report.targets
-        .filter((target) => horizon === "all" || target.horizonMonths === horizon)
+        .filter(
+          (target) =>
+            (period === "all" || report.roundId === period) &&
+            (horizon === "all" || target.horizonMonths === horizon) &&
+            (rankingMode === "live" || target.settledPrice != null),
+        )
         .map((target): RankedOpportunity => {
           const actual = getActualPrice(report, target, prices);
           return {
@@ -143,7 +177,7 @@ export function ResearchRaceDashboard() {
           };
         }),
     );
-  }, [horizon, prices]);
+  }, [horizon, period, prices, rankingMode]);
 
   const standings = useMemo(() => {
     const bestByParticipant = new Map<string, RankedOpportunity>();
@@ -277,16 +311,71 @@ export function ResearchRaceDashboard() {
           <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">
-                Official live ranking
+                Competition standings
               </p>
               <h2 id="live-standings" className="mt-2 text-3xl font-black tracking-tight text-white">
-                即時綜合排名
+                {rankingMode === "live" ? "即時追蹤排名" : "正式結算排名"}
               </h2>
               <p className="mt-2 text-sm text-slate-400">
-                依各參賽者目前最低相對誤差排序；正式名次以到期結算結果為準。
+                {rankingMode === "live"
+                  ? "每位參賽者以目前最精準的一筆有效預測進榜；此排名隨市場行情變動。"
+                  : "每位參賽者以已完成結算的最佳成績進榜，結算價格封存後不再變動。"}
               </p>
             </div>
-            <div className="inline-flex w-fit rounded-full border border-white/10 bg-white/[0.04] p-1">
+          </div>
+
+          <div className="mt-7 grid gap-3 md:grid-cols-2">
+            {RANKING_MODES.map((mode) => (
+              <button
+                key={mode.id}
+                type="button"
+                onClick={() => setRankingMode(mode.id)}
+                className={`rounded-2xl border px-5 py-4 text-left transition ${
+                  rankingMode === mode.id
+                    ? "border-cyan-300/50 bg-cyan-300/10"
+                    : "border-white/10 bg-white/[0.03] hover:border-white/20"
+                }`}
+                aria-pressed={rankingMode === mode.id}
+              >
+                <span
+                  className={`text-sm font-black ${
+                    rankingMode === mode.id ? "text-cyan-200" : "text-white"
+                  }`}
+                >
+                  {mode.label}
+                </span>
+                <span className="mt-1 block text-xs leading-5 text-slate-500">
+                  {mode.description}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/[0.025] p-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="px-2 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
+                預測期別
+              </span>
+              {PERIOD_FILTERS.map((filter) => (
+                <button
+                  key={filter.id}
+                  type="button"
+                  onClick={() => setPeriod(filter.id)}
+                  className={`rounded-full px-4 py-2 text-xs font-bold transition ${
+                    period === filter.id
+                      ? "bg-cyan-300 text-[#071116]"
+                      : "text-slate-400 hover:text-white"
+                  }`}
+                  aria-pressed={period === filter.id}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="px-2 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
+                預測期限
+              </span>
               {FILTERS.map((filter) => (
                 <button
                   key={filter.id}
@@ -305,8 +394,10 @@ export function ResearchRaceDashboard() {
             </div>
           </div>
 
-          <div className="mt-7 grid gap-4 md:grid-cols-3">
-            {standings.slice(0, 3).map((entry) => (
+          {standings.length > 0 ? (
+            <>
+              <div className="mt-7 grid gap-4 md:grid-cols-3">
+                {standings.slice(0, 3).map((entry) => (
               <article
                 key={entry.report.participantId}
                 className={`relative overflow-hidden rounded-3xl border p-5 ${
@@ -336,7 +427,9 @@ export function ResearchRaceDashboard() {
                   </p>
                   <div className="mt-5 flex items-end justify-between gap-4">
                     <div>
-                      <p className="text-xs text-slate-500">即時相對誤差</p>
+                      <p className="text-xs text-slate-500">
+                        {rankingMode === "live" ? "即時相對誤差" : "正式相對誤差"}
+                      </p>
                       <p className="mt-1 text-4xl font-black tracking-[-0.04em] text-cyan-300">
                         {entry.distancePct.toFixed(2)}
                         <span className="ml-0.5 text-base">%</span>
@@ -362,25 +455,28 @@ export function ResearchRaceDashboard() {
                   </div>
                   <div className="mt-3 flex items-center justify-between text-[11px] text-slate-500">
                     <span>
-                      實際 {formatPrice(entry.actualPrice, entry.report)}
-                      {!entry.isLivePrice ? "（基準）" : ""}
+                      {rankingMode === "live" ? "市場價格 " : "結算價格 "}
+                      {formatPrice(entry.actualPrice, entry.report)}
+                      {rankingMode === "live" && !entry.isLivePrice ? "（基準）" : ""}
                     </span>
                     <span>{formatDate(entry.target.resolveDate)} 結算</span>
                   </div>
                 </div>
               </article>
-            ))}
-          </div>
+                ))}
+              </div>
 
-          <div className="mt-5 overflow-hidden rounded-3xl border border-white/10 bg-white/[0.035]">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[820px] border-collapse text-left">
+              <div className="mt-5 overflow-hidden rounded-3xl border border-white/10 bg-white/[0.035]">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[820px] border-collapse text-left">
                 <thead>
                   <tr className="border-b border-white/10 text-[11px] uppercase tracking-[0.14em] text-slate-500">
                     <th className="px-5 py-4 font-bold">名次</th>
                     <th className="px-5 py-4 font-bold">參賽者</th>
                     <th className="px-5 py-4 font-bold">個人最佳預測</th>
-                    <th className="px-5 py-4 text-right font-bold">實際價格</th>
+                    <th className="px-5 py-4 text-right font-bold">
+                      {rankingMode === "live" ? "市場價格" : "結算價格"}
+                    </th>
                     <th className="px-5 py-4 text-right font-bold">預測價格</th>
                     <th className="px-5 py-4 text-right font-bold">誤差</th>
                     <th className="px-5 py-4 text-right font-bold">結算日</th>
@@ -435,9 +531,41 @@ export function ResearchRaceDashboard() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+                  </table>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="mt-7 rounded-3xl border border-dashed border-cyan-300/25 bg-cyan-300/[0.04] px-6 py-12 text-center">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-300">
+                {rankingMode === "settled" ? "Official results pending" : "Forecasts pending"}
+              </p>
+              <h3 className="mt-3 text-xl font-black text-white">
+                {rankingMode === "settled"
+                  ? "正式結算榜將於首批預測到期後啟用"
+                  : "此篩選條件尚無已發布的預測"}
+              </h3>
+              <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-400">
+                {rankingMode === "settled"
+                  ? "首批預測自 2026 年 10 月 20 日起陸續結算。主辦單位完成正式價格封存後，成績將自動納入本榜。"
+                  : "待該期預測正式發布後，系統將依目前選擇的期限自動產生排名。"}
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  if (rankingMode === "settled") {
+                    setRankingMode("live");
+                  } else {
+                    setPeriod("all");
+                    setHorizon("all");
+                  }
+                }}
+                className="mt-6 rounded-full bg-cyan-300 px-5 py-2.5 text-xs font-black text-[#071116] transition hover:bg-cyan-200"
+              >
+                {rankingMode === "settled" ? "查看即時追蹤榜" : "查看全部已發布預測"}
+              </button>
             </div>
-          </div>
+          )}
         </section>
 
         <section aria-labelledby="opportunity-matrix">
@@ -449,7 +577,7 @@ export function ResearchRaceDashboard() {
               預測組合總覽
             </h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
-              每位參賽者於三個預測週期提交短期與中期價格預測。系統先選取個人相對誤差最低的有效預測，再進行全體總排名。
+              每一期可選擇不同市場標的；標的與預測期限皆以單份預測為單位呈現。榜單只採計每位參賽者在目前篩選條件下的最佳成績。
             </p>
           </div>
 
@@ -458,8 +586,11 @@ export function ResearchRaceDashboard() {
               const participantReports = RESEARCH_REPORTS.filter(
                 (report) => report.participantId === participant.id,
               );
-              const firstReport = participantReports[0];
               const rank = rankByParticipant.get(participant.id) ?? 0;
+              const publishedTargetCount = participantReports.reduce(
+                (total, report) => total + report.targets.length,
+                0,
+              );
               return (
                 <article
                   key={participant.id}
@@ -471,7 +602,7 @@ export function ResearchRaceDashboard() {
                       <div>
                         <h3 className="font-black text-white">{participant.analyst}</h3>
                         <p className="text-xs text-slate-500">
-                          {firstReport.instrument} · {firstReport.displaySymbol}
+                          {participantReports.length}/3 期 · {publishedTargetCount}/6 筆預測已發布
                         </p>
                       </div>
                     </div>
@@ -482,51 +613,68 @@ export function ResearchRaceDashboard() {
                     {RESEARCH_REPORT_ROUNDS.map((round) => {
                       const report = participantReports.find((candidate) => candidate.roundId === round.id);
                       return (
-                        <div key={round.id} className="grid grid-cols-[86px_1fr] gap-3 px-5 py-4">
+                        <div
+                          key={round.id}
+                          className="grid gap-3 px-5 py-4 sm:grid-cols-[82px_150px_1fr] sm:items-center"
+                        >
                           <div>
                             <p className="text-xs font-black text-slate-300">{round.label}</p>
                             <p className="mt-1 text-[10px] text-slate-600">{round.monthLabel}</p>
                           </div>
                           {report ? (
-                            <div className="grid grid-cols-2 gap-2">
-                              {report.targets.map((target) => {
-                                const actual = getActualPrice(report, target, prices);
-                                const distance = researchDistancePct(target.targetPrice, actual.price);
-                                return (
-                                  <div
-                                    key={target.horizonMonths}
-                                    className="rounded-xl border border-white/[0.08] bg-black/15 px-3 py-2.5"
-                                  >
-                                    <div className="flex items-center justify-between gap-2">
-                                      <span className="text-[10px] font-bold text-slate-500">
-                                        {target.horizonMonths} 個月
-                                      </span>
-                                      <span className="text-[10px] font-black text-cyan-300">
-                                        {distance.toFixed(1)}%
-                                      </span>
+                            <>
+                              <div className="rounded-xl bg-white/[0.035] px-3 py-2.5">
+                                <p className="text-sm font-black text-white">{report.instrument}</p>
+                                <p className="mt-0.5 text-[10px] font-semibold text-cyan-300">
+                                  {report.displaySymbol}
+                                </p>
+                                <p className="mt-1 text-[10px] text-slate-500">{report.rating}</p>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                {report.targets.map((target) => {
+                                  const actual = getActualPrice(report, target, prices);
+                                  const distance = researchDistancePct(target.targetPrice, actual.price);
+                                  return (
+                                    <div
+                                      key={target.horizonMonths}
+                                      className="rounded-xl border border-white/[0.08] bg-black/15 px-3 py-2.5"
+                                    >
+                                      <div className="flex items-center justify-between gap-2">
+                                        <span className="text-[10px] font-bold text-slate-500">
+                                          {target.horizonMonths} 個月
+                                        </span>
+                                        <span className="text-[10px] font-black text-cyan-300">
+                                          {distance.toFixed(1)}%
+                                        </span>
+                                      </div>
+                                      <p className="mt-1 text-sm font-black text-white">
+                                        {formatPrice(target.targetPrice, report)}
+                                      </p>
+                                      <p className="mt-1 text-[10px] text-slate-600">
+                                        {formatDate(target.resolveDate)}
+                                      </p>
                                     </div>
-                                    <p className="mt-1 text-sm font-black text-white">
-                                      {formatPrice(target.targetPrice, report)}
-                                    </p>
-                                    <p className="mt-1 text-[10px] text-slate-600">
-                                      {formatDate(target.resolveDate)}
-                                    </p>
-                                  </div>
-                                );
-                              })}
-                            </div>
+                                  );
+                                })}
+                              </div>
+                            </>
                           ) : (
-                            <div className="grid grid-cols-2 gap-2">
-                              {[3, 6].map((months) => (
-                                <div
-                                  key={months}
-                                  className="rounded-xl border border-dashed border-white/10 px-3 py-2.5 text-slate-600"
-                                >
-                                  <p className="text-[10px] font-bold">{months} 個月</p>
-                                  <p className="mt-1 text-sm font-semibold">待繳交</p>
-                                </div>
-                              ))}
-                            </div>
+                            <>
+                              <div className="rounded-xl border border-dashed border-white/10 px-3 py-2.5 text-slate-600">
+                                <p className="text-xs font-bold">標的待公布</p>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                {[3, 6].map((months) => (
+                                  <div
+                                    key={months}
+                                    className="rounded-xl border border-dashed border-white/10 px-3 py-2.5 text-slate-600"
+                                  >
+                                    <p className="text-[10px] font-bold">{months} 個月</p>
+                                    <p className="mt-1 text-sm font-semibold">尚未發布</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </>
                           )}
                         </div>
                       );
@@ -557,9 +705,9 @@ export function ResearchRaceDashboard() {
               {[
                 ["01", "定期提交", "每位參賽者完成 3 個預測週期"],
                 ["02", "雙期限預測", "每份報告提交 3／6 個月預測價格"],
-                ["03", "即時衡量", "依最新市場價格持續估算相對誤差"],
-                ["04", "個人最優成績", "每人僅採 6 筆預測中的最低誤差"],
-                ["05", "單一獲獎席次", "依個人最佳成績評定全場前 3 名"],
+                ["03", "即時追蹤", "依最新市場價格呈現暫定領先態勢"],
+                ["04", "正式結算", "到期後以正式價格封存單筆預測成績"],
+                ["05", "唯一獎項", "每人採個人最佳成績競逐全場前 3 名"],
               ].map(([number, title, body]) => (
                 <li key={number} className="rounded-2xl border border-white/10 bg-black/15 p-4">
                   <span className="font-mono text-xs font-black text-cyan-300">{number}</span>
@@ -569,7 +717,7 @@ export function ResearchRaceDashboard() {
               ))}
             </ol>
             <div className="mt-6 border-t border-white/10 pt-5 text-xs leading-5 text-slate-500">
-              評分指標採絕對百分比誤差（Absolute Percentage Error, APE）：|預測價格 − 結算價格| ÷ 結算價格 × 100%。數值越低代表預測越精準。結算日遇非交易日，採下一個可取得的正式收盤價；結算價格封存後不再隨行情變動。本頁僅供賽事紀錄與研究交流，不構成投資建議。
+              評分指標採絕對百分比誤差（Absolute Percentage Error, APE）：|預測價格 − 結算價格| ÷ 結算價格 × 100%。數值越低代表預測越精準。即時追蹤榜僅呈現市場動態，不代表正式名次；正式結算榜只納入已到期並封存的預測。結算日遇非交易日，採下一個可取得的正式收盤價。本頁僅供賽事紀錄與交流，不構成投資建議。
             </div>
           </div>
         </section>
