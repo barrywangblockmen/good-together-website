@@ -78,7 +78,7 @@ function getActualPrice(
 }
 
 function targetStatus(target: ResearchTarget) {
-  if (target.settledPrice != null) return "已開獎";
+  if (target.settledPrice != null) return "已結算";
   return "追蹤中";
 }
 
@@ -192,18 +192,18 @@ export function ResearchRaceDashboard() {
             <div className="max-w-4xl">
               <div className="flex flex-wrap items-center gap-2 text-xs font-bold tracking-[0.18em]">
                 <span className="rounded-full bg-cyan-300 px-3 py-1 text-[#071116]">
-                  GT RESEARCH GRAND PRIX
+                  GT RESEARCH PREDICTION MARKET
                 </span>
                 <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-slate-300">
-                  2026 首屆目標價大賞
+                  2026 年度研究預測賽
                 </span>
               </div>
               <h1 className="mt-5 text-4xl font-black tracking-[-0.04em] text-white md:text-6xl">
-                誰的目標價
-                <span className="block text-cyan-300">最接近市場？</span>
+                GT投研
+                <span className="block text-cyan-300">預測市場</span>
               </h1>
               <p className="mt-5 max-w-3xl text-base leading-7 text-slate-300 md:text-lg">
-                8 位研究員、每人 3 份報告、每份 3／6 個月雙目標。每天以最新實際價格重算距離，每人只帶自己最準的一次進入總榜。
+                本賽事採絕對百分比誤差（APE）作為統一評分標準，跨市場比較不同預測週期的價格判斷。排名隨市場行情更新，最終成績以各預測結算日的正式收盤價封存。
               </p>
             </div>
 
@@ -256,9 +256,12 @@ export function ResearchRaceDashboard() {
           <div className="mt-10 grid grid-cols-2 gap-3 md:grid-cols-4">
             {[
               { value: "8", label: "位參賽研究員" },
-              { value: `${publishedOpportunities}/${RESEARCH_TOTAL_OPPORTUNITIES}`, label: "機會已發布" },
-              { value: "6", label: "每人最多機會" },
-              { value: "10.20", label: "首批開獎起跑" },
+              {
+                value: `${publishedOpportunities}/${RESEARCH_TOTAL_OPPORTUNITIES}`,
+                label: "有效預測已發布",
+              },
+              { value: "6", label: "每人預測席次" },
+              { value: "10.20", label: "首批預測結算" },
             ].map((stat) => (
               <div key={stat.label} className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4">
                 <p className="text-2xl font-black tracking-tight text-white md:text-3xl">{stat.value}</p>
@@ -273,11 +276,15 @@ export function ResearchRaceDashboard() {
         <section aria-labelledby="live-standings">
           <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">Live standings</p>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">
+                Official live ranking
+              </p>
               <h2 id="live-standings" className="mt-2 text-3xl font-black tracking-tight text-white">
-                今日暫定頒獎台
+                即時綜合排名
               </h2>
-              <p className="mt-2 text-sm text-slate-400">距離越小越準；同一位參賽者只保留最佳一次。</p>
+              <p className="mt-2 text-sm text-slate-400">
+                依各研究員目前最低相對誤差排序；正式名次以到期結算結果為準。
+              </p>
             </div>
             <div className="inline-flex w-fit rounded-full border border-white/10 bg-white/[0.04] p-1">
               {FILTERS.map((filter) => (
@@ -329,7 +336,7 @@ export function ResearchRaceDashboard() {
                   </p>
                   <div className="mt-5 flex items-end justify-between gap-4">
                     <div>
-                      <p className="text-xs text-slate-500">目前誤差</p>
+                      <p className="text-xs text-slate-500">即時相對誤差</p>
                       <p className="mt-1 text-4xl font-black tracking-[-0.04em] text-cyan-300">
                         {entry.distancePct.toFixed(2)}
                         <span className="ml-0.5 text-base">%</span>
@@ -337,7 +344,7 @@ export function ResearchRaceDashboard() {
                     </div>
                     <div className="text-right text-xs">
                       <p className="text-slate-500">
-                        {entry.target.horizonMonths} 個月目標
+                        {entry.target.horizonMonths} 個月預測
                       </p>
                       <p className="mt-1 font-bold text-white">
                         {formatPrice(entry.target.targetPrice, entry.report)}
@@ -358,7 +365,7 @@ export function ResearchRaceDashboard() {
                       實際 {formatPrice(entry.actualPrice, entry.report)}
                       {!entry.isLivePrice ? "（基準）" : ""}
                     </span>
-                    <span>{formatDate(entry.target.resolveDate)} 開獎</span>
+                    <span>{formatDate(entry.target.resolveDate)} 結算</span>
                   </div>
                 </div>
               </article>
@@ -372,11 +379,11 @@ export function ResearchRaceDashboard() {
                   <tr className="border-b border-white/10 text-[11px] uppercase tracking-[0.14em] text-slate-500">
                     <th className="px-5 py-4 font-bold">名次</th>
                     <th className="px-5 py-4 font-bold">研究員</th>
-                    <th className="px-5 py-4 font-bold">最佳機會</th>
+                    <th className="px-5 py-4 font-bold">個人最佳預測</th>
                     <th className="px-5 py-4 text-right font-bold">實際價格</th>
-                    <th className="px-5 py-4 text-right font-bold">目標價</th>
+                    <th className="px-5 py-4 text-right font-bold">預測價格</th>
                     <th className="px-5 py-4 text-right font-bold">誤差</th>
-                    <th className="px-5 py-4 text-right font-bold">開獎日</th>
+                    <th className="px-5 py-4 text-right font-bold">結算日</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -435,12 +442,14 @@ export function ResearchRaceDashboard() {
 
         <section aria-labelledby="opportunity-matrix">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">Opportunity matrix</p>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">
+              Forecast portfolio
+            </p>
             <h2 id="opportunity-matrix" className="mt-2 text-3xl font-black tracking-tight text-white">
-              每人六次機會
+              預測組合總覽
             </h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
-              每一格都是獨立預測。第 2、3 份報告發布後，系統會自動從該參賽者最多六個目標中挑出誤差最小的一格。
+              每位研究員於三個研究週期提交短期與中期價格預測。系統先選取個人相對誤差最低的有效預測，再進行跨研究員總排名。
             </p>
           </div>
 
@@ -533,22 +542,24 @@ export function ResearchRaceDashboard() {
           <div className="rounded-3xl border border-cyan-300/15 bg-gradient-to-br from-cyan-300/[0.08] via-white/[0.03] to-amber-300/[0.06] p-6 md:p-8">
             <div className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">How it works</p>
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">
+                  Official methodology
+                </p>
                 <h2 id="race-rules" className="mt-2 text-3xl font-black tracking-tight text-white">
-                  五步決定最準研究員
+                  標準化評選機制
                 </h2>
               </div>
               <div className="rounded-full border border-amber-300/30 bg-amber-300/10 px-4 py-2 text-xs font-black text-amber-200">
-                同一人最多獲得一個獎項
+                個人最佳成績制 · 每人限一席獎項
               </div>
             </div>
             <ol className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
               {[
-                ["01", "每月交一份", "每人共 3 份研究報告"],
-                ["02", "一份雙目標", "3 個月與 6 個月各一價"],
-                ["03", "行情每日重算", "以最新實際價格計算誤差"],
-                ["04", "自己先比自己", "六次機會只留下最準一次"],
-                ["05", "全場排前三", "8 人各一席，頒出 1～3 名"],
+                ["01", "定期提交", "每位研究員完成 3 個研究週期"],
+                ["02", "雙期限預測", "每份報告提交 3／6 個月預測價格"],
+                ["03", "即時衡量", "依最新市場價格持續估算相對誤差"],
+                ["04", "個人最優成績", "每人僅採 6 筆預測中的最低誤差"],
+                ["05", "單一獲獎席次", "依個人最佳成績評定全場前 3 名"],
               ].map(([number, title, body]) => (
                 <li key={number} className="rounded-2xl border border-white/10 bg-black/15 p-4">
                   <span className="font-mono text-xs font-black text-cyan-300">{number}</span>
@@ -558,7 +569,7 @@ export function ResearchRaceDashboard() {
               ))}
             </ol>
             <div className="mt-6 border-t border-white/10 pt-5 text-xs leading-5 text-slate-500">
-              誤差公式：|目標價 − 實際價格| ÷ 實際價格 × 100%。開獎以到期日收盤價為準；遇非交易日則採下一個可取得的正式收盤價。到期價格鎖定後不再隨行情變動。此頁為競賽紀錄，不構成投資建議。
+              評分指標採絕對百分比誤差（Absolute Percentage Error, APE）：|預測價格 − 結算價格| ÷ 結算價格 × 100%。數值越低代表預測越精準。結算日遇非交易日，採下一個可取得的正式收盤價；結算價格封存後不再隨行情變動。本頁僅供賽事紀錄與研究交流，不構成投資建議。
             </div>
           </div>
         </section>

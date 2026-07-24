@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { ResearchRaceDashboard } from "@/components/research-gp/research-race-dashboard";
 import { createMetadata } from "@/lib/metadata";
 
-const title = "GT投研目標價大賞";
+const title = "GT投研預測市場";
 const description =
-  "8 位研究員、每人 3 份報告、3 個月與 6 個月雙目標的即時競賽榜。每天依最新實際價格更新誤差與暫定名次。";
+  "GT投研年度研究預測賽，以標準化相對誤差衡量跨資產、跨週期的價格預測表現，並依市場行情即時更新官方排名。";
 const baseMetadata = createMetadata({
   title,
   description,
