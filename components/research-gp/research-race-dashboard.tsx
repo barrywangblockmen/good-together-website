@@ -192,14 +192,14 @@ export function ResearchRaceDashboard() {
             <div className="max-w-4xl">
               <div className="flex flex-wrap items-center gap-2 text-xs font-bold tracking-[0.18em]">
                 <span className="rounded-full bg-cyan-300 px-3 py-1 text-[#071116]">
-                  GT RESEARCH PREDICTION MARKET
+                  GT PREDICTION MARKET
                 </span>
                 <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-slate-300">
-                  2026 年度研究預測賽
+                  2026 年度市場預測賽
                 </span>
               </div>
               <h1 className="mt-5 text-4xl font-black tracking-[-0.04em] text-white md:text-6xl">
-                GT投研
+                GT
                 <span className="block text-cyan-300">預測市場</span>
               </h1>
               <p className="mt-5 max-w-3xl text-base leading-7 text-slate-300 md:text-lg">
@@ -255,7 +255,7 @@ export function ResearchRaceDashboard() {
 
           <div className="mt-10 grid grid-cols-2 gap-3 md:grid-cols-4">
             {[
-              { value: "8", label: "位參賽研究員" },
+              { value: "8", label: "位參賽者" },
               {
                 value: `${publishedOpportunities}/${RESEARCH_TOTAL_OPPORTUNITIES}`,
                 label: "有效預測已發布",
@@ -283,7 +283,7 @@ export function ResearchRaceDashboard() {
                 即時綜合排名
               </h2>
               <p className="mt-2 text-sm text-slate-400">
-                依各研究員目前最低相對誤差排序；正式名次以到期結算結果為準。
+                依各參賽者目前最低相對誤差排序；正式名次以到期結算結果為準。
               </p>
             </div>
             <div className="inline-flex w-fit rounded-full border border-white/10 bg-white/[0.04] p-1">
@@ -378,7 +378,7 @@ export function ResearchRaceDashboard() {
                 <thead>
                   <tr className="border-b border-white/10 text-[11px] uppercase tracking-[0.14em] text-slate-500">
                     <th className="px-5 py-4 font-bold">名次</th>
-                    <th className="px-5 py-4 font-bold">研究員</th>
+                    <th className="px-5 py-4 font-bold">參賽者</th>
                     <th className="px-5 py-4 font-bold">個人最佳預測</th>
                     <th className="px-5 py-4 text-right font-bold">實際價格</th>
                     <th className="px-5 py-4 text-right font-bold">預測價格</th>
@@ -449,7 +449,7 @@ export function ResearchRaceDashboard() {
               預測組合總覽
             </h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
-              每位研究員於三個研究週期提交短期與中期價格預測。系統先選取個人相對誤差最低的有效預測，再進行跨研究員總排名。
+              每位參賽者於三個預測週期提交短期與中期價格預測。系統先選取個人相對誤差最低的有效預測，再進行全體總排名。
             </p>
           </div>
 
@@ -555,7 +555,7 @@ export function ResearchRaceDashboard() {
             </div>
             <ol className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
               {[
-                ["01", "定期提交", "每位研究員完成 3 個研究週期"],
+                ["01", "定期提交", "每位參賽者完成 3 個預測週期"],
                 ["02", "雙期限預測", "每份報告提交 3／6 個月預測價格"],
                 ["03", "即時衡量", "依最新市場價格持續估算相對誤差"],
                 ["04", "個人最優成績", "每人僅採 6 筆預測中的最低誤差"],
