@@ -35,6 +35,8 @@ export type AitgpPriceSnapshot = {
   updatedAt: string;
   unsupported: string[];
   chartHistory: SnapshotStore;
+  /** roundId → symbol → 已鎖定結算價（字串，與 exitPrice 相同） */
+  settledExits?: Record<string, Record<string, string>>;
 };
 
 /** 圖表分頁用賽程（含暖身 GP0） */

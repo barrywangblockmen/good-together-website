@@ -5,7 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { TeamCard } from "@/components/aitgp/team-card";
 import { useAitgpPrices } from "@/components/aitgp/use-aitgp-prices";
 import { formatSnapshotLabel, AITGP_PRICE_UPDATE_NOTE } from "@/lib/aitgp-chart";
-import { ROUNDS, TEAMS, getDefaultRoundId, getRoundEntry, getTeamSeasonStats, mainScore, sprintScore } from "@/lib/aitgp";
+import { ROUNDS, TEAMS, applySettledExits, getDefaultRoundId, getRoundEntry, getTeamSeasonStats, mainScore, sprintScore } from "@/lib/aitgp";
 
 type TeamLayout = "1" | "2" | "3" | "list";
 type TeamSort = "main" | "sprint" | "points" | "name";
@@ -102,11 +102,13 @@ export function TeamsSection() {
   const hasAnyData = TEAMS.some((t) => getRoundEntry(t.id, activeId));
 
   const rankedTeams = useMemo(() => {
+    const roundExits = snapshot?.settledExits?.[activeId];
     const items = TEAMS.map((team) => {
-      const entry = getRoundEntry(team.id, activeId);
+      const raw = getRoundEntry(team.id, activeId);
+      const entry = raw ? applySettledExits(raw, roundExits) : undefined;
       const main = entry ? mainScore(entry, snapshot?.prices) : undefined;
       const sprint = entry ? sprintScore(entry, snapshot?.prices) : undefined;
-      const seasonPoints = getTeamSeasonStats(team.id).points;
+      const seasonPoints = getTeamSeasonStats(team.id, snapshot?.settledExits).points;
       return { team, main, sprint, seasonPoints };
     });
 
@@ -129,7 +131,7 @@ export function TeamsSection() {
       ...ranked.map((x, i) => ({ ...x, badge: `#${i + 1}` })),
       ...unranked.map((x) => ({ ...x, badge: "—" })),
     ];
-  }, [activeId, snapshot?.prices, sortBy]);
+  }, [activeId, snapshot?.prices, snapshot?.settledExits, sortBy]);
 
   return (
     <div data-aitgp-section="teams" data-aitgp-round={activeId}>
@@ -254,11 +256,12 @@ export function TeamsSection() {
               <TeamCard
                 key={team.id}
                 team={team}
-                stats={getTeamSeasonStats(team.id)}
+                stats={getTeamSeasonStats(team.id, snapshot?.settledExits)}
                 badge={badge}
                 roundId={activeId}
                 variant={layout === "list" ? "list" : "card"}
                 livePrices={snapshot?.prices}
+                settledExits={snapshot?.settledExits?.[activeId]}
               />
             ))}
           </div>

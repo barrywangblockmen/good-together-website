@@ -38,29 +38,32 @@ function taipeiDate() {
 
 function parseLadderTop(ladder) {
   if (!ladder) return undefined;
-  const top = ladder.split("_")[0]?.replace(/,/g, "");
-  if (!top || top === "-") return undefined;
-  const n = Number(top);
+  for (const part of ladder.split("_")) {
+    const top = part?.replace(/,/g, "");
+    if (!top || top === "-") continue;
+    const n = Number(top);
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+  return undefined;
+}
+
+function parsePositive(raw) {
+  if (!raw) return undefined;
+  const v = raw.replace(/,/g, "");
+  if (!v || v === "-" || v === "0.0000") return undefined;
+  const n = Number(v);
   return Number.isFinite(n) && n > 0 ? n : undefined;
 }
 
 function parseTwseRow(row) {
-  const z = row.z?.replace(/,/g, "");
-  if (z && z !== "-" && z !== "0.0000") {
-    const n = Number(z);
-    if (Number.isFinite(n) && n > 0) return n;
-  }
+  const last = parsePositive(row.z);
+  if (last != null) return last;
   const ask = parseLadderTop(row.a);
   const bid = parseLadderTop(row.b);
   if (ask != null && bid != null) return (ask + bid) / 2;
   if (ask != null) return ask;
   if (bid != null) return bid;
-  const y = row.y?.replace(/,/g, "");
-  if (y) {
-    const n = Number(y);
-    if (Number.isFinite(n) && n > 0) return n;
-  }
-  return undefined;
+  return parsePositive(row.o) ?? parsePositive(row.u) ?? parsePositive(row.h) ?? parsePositive(row.y);
 }
 
 async function fetchTwse(symbols) {

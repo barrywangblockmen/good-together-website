@@ -8,7 +8,8 @@ import {
 } from "@/lib/aitgp-snapshots-server";
 import { collectTaifexTargets, fetchTaifexPrices } from "@/lib/aitgp-taifex";
 import { AITGP_PRICE_TTL_SECONDS, type AitgpPriceSnapshot } from "@/lib/aitgp-chart";
-import { getAllEntrySymbols } from "@/lib/aitgp";
+import { getAllEntrySymbols, isTwStockSymbol } from "@/lib/aitgp";
+import { getSettledExitsByRound } from "@/lib/aitgp-settlements-server";
 
 export { AITGP_PRICE_TTL_SECONDS, type AitgpPriceSnapshot } from "@/lib/aitgp-chart";
 
@@ -18,7 +19,7 @@ export type AitgpPriceQuote = {
   source: "binance-futures" | "twse" | "taifex";
 };
 
-const TWSE_OTC = new Set(["8255", "5536", "4991", "6620", "8027", "3374"]);
+const TWSE_OTC = new Set(["8255", "5536", "4991", "6620", "8027", "3374", "5274"]);
 
 /** Binance 合約代號與進場價單位不一致時需換算（例：1000PEPEUSDT → PEPE 現價 ÷ 1000） */
 const BINANCE_FUTURES_ALIASES: Record<string, { symbol: string; scale: number }> = {
@@ -33,7 +34,7 @@ function isWithinTtl(updatedAt: string): boolean {
 }
 
 function isTwStock(symbol: string): boolean {
-  return /^\d{4}$/.test(symbol) || /^00[\dA-Z]{4}$/i.test(symbol);
+  return isTwStockSymbol(symbol);
 }
 
 function isTaifexSymbol(symbol: string): boolean {
@@ -49,22 +50,40 @@ function twseExCh(symbol: string): string {
   return `${ch}_${symbol}.tw`;
 }
 
-type TwseRow = { c?: string; z?: string; y?: string; a?: string; b?: string };
+type TwseRow = {
+  c?: string;
+  z?: string;
+  y?: string;
+  o?: string;
+  u?: string;
+  h?: string;
+  a?: string;
+  b?: string;
+};
 
+/** 取買賣五檔中第一個有效價（略過 - / 0，漲停時常出現 0.0000_漲停價_…） */
 function parseLadderTop(ladder?: string): number | undefined {
   if (!ladder) return undefined;
-  const top = ladder.split("_")[0]?.replace(/,/g, "");
-  if (!top || top === "-") return undefined;
-  const n = Number(top);
+  for (const part of ladder.split("_")) {
+    const top = part?.replace(/,/g, "");
+    if (!top || top === "-") continue;
+    const n = Number(top);
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+  return undefined;
+}
+
+function parsePositive(raw?: string): number | undefined {
+  if (!raw) return undefined;
+  const v = raw.replace(/,/g, "");
+  if (!v || v === "-" || v === "0.0000") return undefined;
+  const n = Number(v);
   return Number.isFinite(n) && n > 0 ? n : undefined;
 }
 
 function parseTwsePrice(row: TwseRow): number | undefined {
-  const z = row.z?.replace(/,/g, "");
-  if (z && z !== "-" && z !== "0.0000") {
-    const n = Number(z);
-    if (Number.isFinite(n) && n > 0) return n;
-  }
+  const last = parsePositive(row.z);
+  if (last != null) return last;
 
   // MIS 盤中常回 z=-，改以最佳買賣價中間價估算
   const ask = parseLadderTop(row.a);
@@ -73,12 +92,13 @@ function parseTwsePrice(row: TwseRow): number | undefined {
   if (ask != null) return ask;
   if (bid != null) return bid;
 
-  const y = row.y?.replace(/,/g, "");
-  if (y) {
-    const n = Number(y);
-    if (Number.isFinite(n) && n > 0) return n;
-  }
-  return undefined;
+  // 漲停／無五檔時：優先今開、漲停價、最高，最後才用昨收（避免整日卡在 y）
+  return (
+    parsePositive(row.o) ??
+    parsePositive(row.u) ??
+    parsePositive(row.h) ??
+    parsePositive(row.y)
+  );
 }
 
 function toBinanceFuturesSymbol(symbol: string): string {
@@ -192,12 +212,17 @@ async function fetchQuotes(): Promise<AitgpLatestPrices> {
   };
 }
 
-function toSnapshot(latest: AitgpLatestPrices, chartHistory: Awaited<ReturnType<typeof readSnapshots>>): AitgpPriceSnapshot {
+function toSnapshot(
+  latest: AitgpLatestPrices,
+  chartHistory: Awaited<ReturnType<typeof readSnapshots>>,
+  settledExits: Record<string, Record<string, string>>,
+): AitgpPriceSnapshot {
   return {
     prices: latest.prices,
     updatedAt: latest.updatedAt,
     unsupported: latest.unsupported,
     chartHistory,
+    settledExits,
   };
 }
 
@@ -208,8 +233,11 @@ export async function refreshAitgpPrices(): Promise<AitgpPriceSnapshot> {
   refreshPromise = (async () => {
     const latest = await fetchQuotes();
     await writeLatestPrices(latest);
-    const chartHistory = await appendHourlySnapshots(latest.prices);
-    return toSnapshot(latest, chartHistory);
+    const [chartHistory, settledExits] = await Promise.all([
+      appendHourlySnapshots(latest.prices),
+      getSettledExitsByRound(),
+    ]);
+    return toSnapshot(latest, chartHistory, settledExits);
   })().finally(() => {
     refreshPromise = null;
   });
@@ -219,10 +247,14 @@ export async function refreshAitgpPrices(): Promise<AitgpPriceSnapshot> {
 
 /** 讀取已持久化的行情；過期時才 fallback 重新抓取 */
 export async function getAitgpPrices(): Promise<AitgpPriceSnapshot> {
-  const [latest, chartHistory] = await Promise.all([readLatestPrices(), readSnapshots()]);
+  const [latest, chartHistory, settledExits] = await Promise.all([
+    readLatestPrices(),
+    readSnapshots(),
+    getSettledExitsByRound(),
+  ]);
 
   if (latest && isWithinTtl(latest.updatedAt)) {
-    return toSnapshot(latest, chartHistory);
+    return toSnapshot(latest, chartHistory, settledExits);
   }
 
   return refreshAitgpPrices();

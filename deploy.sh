@@ -64,7 +64,10 @@ ssh -i "$SSH_KEY_PATH" "${SSH_USER}@${SSH_HOST}" "
     # 伺服器時區為 UTC：05:30 UTC = 台北 13:30
     CRON_HOURLY=\"0 * * * * /bin/bash -lc 'cd $REMOTE_APP_DIR && set -a && source .env.production && set +a && /usr/bin/node scripts/aitgp-fetch-prices.mjs >> $REMOTE_APP_DIR/data/aitgp-cron.log 2>&1'\"
     CRON_DAILY=\"30 5 * * * /bin/bash -lc 'cd $REMOTE_APP_DIR && set -a && source .env.production && set +a && /usr/bin/node scripts/aitgp-fetch-prices.mjs >> $REMOTE_APP_DIR/data/aitgp-cron.log 2>&1'\"
-    (crontab -l 2>/dev/null | grep -Fv \"\$CRON_MARKER\" | grep -Fv 'aitgp-fetch-prices' | grep -Fv 'aitgp-hourly-prices' | grep -Fv 'CRON_TZ' || true; echo \"\$CRON_MARKER\"; echo \"\$CRON_HOURLY\"; echo \"\$CRON_DAILY\") | crontab -
+    # 美股收盤後（EDT 16:00 = UTC 20:00 = 台北次日 04:00）結算非台股；一次性：7/31 20:00 UTC
+    CRON_SETTLE_MARKER=\"# aitgp-nontw-settle\"
+    CRON_SETTLE=\"0 20 31 7 * /bin/bash -lc 'cd $REMOTE_APP_DIR && set -a && source .env.production && set +a && /usr/bin/node scripts/aitgp-settle-nontw.mjs r02 >> $REMOTE_APP_DIR/data/aitgp-cron.log 2>&1'\"
+    (crontab -l 2>/dev/null | grep -Fv \"\$CRON_MARKER\" | grep -Fv \"\$CRON_SETTLE_MARKER\" | grep -Fv 'aitgp-fetch-prices' | grep -Fv 'aitgp-settle-nontw' | grep -Fv 'aitgp-hourly-prices' | grep -Fv 'CRON_TZ' || true; echo \"\$CRON_MARKER\"; echo \"\$CRON_HOURLY\"; echo \"\$CRON_DAILY\"; echo \"\$CRON_SETTLE_MARKER\"; echo \"\$CRON_SETTLE\") | crontab -
     if [[ -n \"\${AITGP_CRON_SECRET:-}\" ]]; then
       sleep 3
       /usr/bin/node scripts/aitgp-fetch-prices.mjs || true

@@ -42,6 +42,8 @@ export type Team = {
   logo?: string;
   /** 賽車圖片路徑（public 起算）；佔位車隊留空 */
   car?: string;
+  /** 車隊個人網站（外連）；尚未建站則留空 */
+  website?: string;
   isPlaceholder?: boolean;
 };
 
@@ -119,20 +121,20 @@ export const RACE_FORMATS = [
 export const INSTRUMENT_RULES = {
   title: "標的與槓桿規範",
   summary:
-    "本賽事比的是 1x 曝險下的選股與交易紀律；禁止以選擇權等內含槓桿的商品放大報酬率。",
+    "本賽事比的是 1x 曝險下的選股與交易紀律；禁止以選擇權、槓桿型商品等內含槓桿的工具放大報酬率。",
   allowed: [
-    "上市／上櫃現股、一般 ETF（非槓桿、非反向）",
+    "上市／上櫃現股、一般 ETF、反向 ETF（限 1 倍，非槓桿型）",
     "指數期貨（限 1 口標準／小口，不得額外融資或放大的保證金操作）",
     "加密資產（限 1x，合約須關閉槓桿放大）",
   ],
   prohibited: [
     "選擇權（含買權、賣權、週選、月選）",
     "權證、牛熊證、可轉債等具內含槓桿或不對稱損益結構之商品",
-    "槓桿／反向 ETF、結構型商品",
+    "槓桿型 ETF（2x／3x 等）、結構型商品",
     "任何以少額保證金或權利金承擔超過 1x 曝險之操作（含賣出選擇權）",
   ],
   leverageNote:
-    "「1x 槓桿」指單一標的之盈虧 % 應與標的本身價格漲跌幅相當；不得以權利金、保證金倍數等方式使報酬率脫離標的漲跌。",
+    "「1x 槓桿」指單一標的之盈虧 % 應與標的本身價格漲跌幅相當；反向 ETF 可參賽，但不得使用槓桿型 ETF 或額外保證金倍數放大報酬。",
   violation:
     "正式站次（R01 起）若使用禁止標的，該標的不計入當站成績；無法於賽期內替換者，該標的以 0% 計。",
 } as const;
@@ -213,6 +215,7 @@ export const TEAMS: Team[] = [
     blurb: "用 AI 整理財報、抓進出場點位，紀律進場、設好目標價再放著。",
     logo: "/aitgp/teams/strawberry-berry/logo.png",
     car: "/aitgp/teams/strawberry-berry/car.png",
+    website: "https://strawbarry-racing.barryse.chatgpt.site/",
   },
   {
     id: "project-d",
@@ -309,7 +312,8 @@ export const ROUNDS: Round[] = [
     circuit: "Hungaroring",
     tradingPeriod: "7/27（一）– 8/7（五）",
     settleDate: "8/10（一）結算",
-    status: "racing",
+    status: "settled",
+    note: "已結算完成：台股以 7/31 13:30 收盤價鎖定；加密／美股代幣以 8/1 04:00（美股收盤後）鎖定，盈虧不再更新。",
   },
   {
     id: "r03",
@@ -317,9 +321,9 @@ export const ROUNDS: Round[] = [
     name: "荷蘭站 Dutch GP",
     theme: "Round 03",
     circuit: "Zandvoort",
-    tradingPeriod: "8/17（一）– 8/28（五）",
-    settleDate: "8/31（一）結算",
-    status: "upcoming",
+    tradingPeriod: "8/10（一）– 8/21（五）",
+    settleDate: "8/24（一）結算",
+    status: "racing",
   },
   {
     id: "r04",
@@ -327,8 +331,8 @@ export const ROUNDS: Round[] = [
     name: "西班牙站 Spanish GP",
     theme: "Round 04 · 馬德里",
     circuit: "Madring",
-    tradingPeriod: "9/7（一）– 9/18（五）",
-    settleDate: "9/21（一）結算",
+    tradingPeriod: "8/31（一）– 9/11（五）",
+    settleDate: "9/14（一）結算",
     status: "upcoming",
   },
   {
@@ -337,8 +341,8 @@ export const ROUNDS: Round[] = [
     name: "新加坡站 Singapore GP",
     theme: "Round 05",
     circuit: "Marina Bay",
-    tradingPeriod: "9/28（一）– 10/9（五）",
-    settleDate: "10/12（一）結算",
+    tradingPeriod: "9/21（一）– 10/2（五）",
+    settleDate: "10/5（一）結算",
     status: "upcoming",
   },
   {
@@ -347,8 +351,8 @@ export const ROUNDS: Round[] = [
     name: "美國站 United States GP",
     theme: "Round 06",
     circuit: "COTA, Austin",
-    tradingPeriod: "10/19（一）– 10/30（五）",
-    settleDate: "11/2（一）結算",
+    tradingPeriod: "10/12（一）– 10/23（五）",
+    settleDate: "10/26（一）結算",
     status: "upcoming",
   },
   {
@@ -357,8 +361,8 @@ export const ROUNDS: Round[] = [
     name: "拉斯維加斯站 Las Vegas GP",
     theme: "Round 07",
     circuit: "Las Vegas Strip",
-    tradingPeriod: "11/9（一）– 11/20（五）",
-    settleDate: "11/23（一）結算",
+    tradingPeriod: "11/2（一）– 11/13（五）",
+    settleDate: "11/16（一）結算",
     status: "upcoming",
   },
   {
@@ -367,8 +371,8 @@ export const ROUNDS: Round[] = [
     name: "阿布達比站 Abu Dhabi GP",
     theme: "Round 08 · 年度收官",
     circuit: "Yas Marina",
-    tradingPeriod: "11/30（一）– 12/11（五）",
-    settleDate: "12/14（一）總結算 + 年度頒獎",
+    tradingPeriod: "11/23（一）– 12/4（五）",
+    settleDate: "12/7（一）總結算 + 年度頒獎",
     status: "upcoming",
   },
 ];
@@ -645,101 +649,206 @@ export const ROUND_ENTRIES: RoundEntry[] = [
     ],
     points: 14,
   },
-  // R02 匈牙利站（7/27–8/7）
+  // R02 匈牙利站（7/27–8/7）；已結算
   {
     teamId: "strawberry-berry",
     roundId: "r02",
     main: [
-      { symbol: "XAG", direction: "short", entryPrice: "57.79" },
-      { symbol: "LIT", direction: "long", entryPrice: "2.2117" },
+      { symbol: "XAG", direction: "short", entryPrice: "57.79", exitPrice: "58.02" },
+      { symbol: "LIT", direction: "long", entryPrice: "2.2117", exitPrice: "2.0672" },
     ],
     sprint: [
-      { symbol: "ONDO", entryPrice: "0.3455" },
-      { symbol: "UNI", entryPrice: "3.519" },
+      { symbol: "ONDO", entryPrice: "0.3455", exitPrice: "0.3963" },
+      { symbol: "UNI", entryPrice: "3.519", exitPrice: "4.231" },
     ],
+    points: 35,
   },
   {
     teamId: "money-queue",
     roundId: "r02",
     main: [
-      { symbol: "4991", label: "環宇-KY", direction: "long", entryPrice: "346" },
-      { symbol: "3231", label: "緯創", direction: "long", entryPrice: "142" },
+      { symbol: "4991", label: "環宇-KY", direction: "long", entryPrice: "346", exitPrice: "353" },
+      { symbol: "3231", label: "緯創", direction: "long", entryPrice: "142", exitPrice: "176" },
     ],
     sprint: [
-      { symbol: "4991", label: "環宇-KY", entryPrice: "346" },
-      { symbol: "3231", label: "緯創", entryPrice: "142" },
+      { symbol: "4991", label: "環宇-KY", entryPrice: "346", exitPrice: "353" },
+      { symbol: "3231", label: "緯創", entryPrice: "142", exitPrice: "176" },
     ],
+    points: 43,
   },
   {
     teamId: "youre-right",
     roundId: "r02",
     main: [
-      { symbol: "2330", label: "台積電", direction: "long", entryPrice: "2300" },
-      { symbol: "2303", label: "聯電", direction: "long", entryPrice: "141" },
+      { symbol: "2330", label: "台積電", direction: "long", entryPrice: "2300", exitPrice: "2425" },
+      { symbol: "2303", label: "聯電", direction: "long", entryPrice: "141", exitPrice: "121" },
     ],
     sprint: [
-      { symbol: "2330", label: "台積電", entryPrice: "2300" },
-      { symbol: "2303", label: "聯電", entryPrice: "141" },
+      { symbol: "2330", label: "台積電", entryPrice: "2300", exitPrice: "2425" },
+      { symbol: "2303", label: "聯電", entryPrice: "141", exitPrice: "121" },
     ],
+    points: 18,
   },
   {
     teamId: "princess-yuanying",
     roundId: "r02",
     main: [
-      { symbol: "2313", label: "華通", direction: "long", entryPrice: "205" },
-      { symbol: "3189", label: "景碩", direction: "long", entryPrice: "694" },
+      { symbol: "2313", label: "華通", direction: "long", entryPrice: "205", exitPrice: "169" },
+      { symbol: "3189", label: "景碩", direction: "long", entryPrice: "694", exitPrice: "635" },
     ],
     sprint: [
-      { symbol: "2454", label: "聯發科", entryPrice: "3355" },
-      { symbol: "3189", label: "景碩", entryPrice: "694" },
+      { symbol: "2454", label: "聯發科", entryPrice: "3355", exitPrice: "3555" },
+      { symbol: "3189", label: "景碩", entryPrice: "694", exitPrice: "635" },
     ],
+    points: 19,
   },
   {
     teamId: "redrock-racing",
     roundId: "r02",
     main: [
-      { symbol: "BTC", direction: "long", entryPrice: "64750" },
-      { symbol: "2327", label: "國巨", direction: "long", entryPrice: "630" },
+      { symbol: "BTC", direction: "long", entryPrice: "64750", exitPrice: "62933.3" },
+      { symbol: "2327", label: "國巨", direction: "long", entryPrice: "630", exitPrice: "502" },
     ],
     sprint: [
-      { symbol: "SPCX", entryPrice: "123.99" },
-      { symbol: "5536", label: "聖暉", entryPrice: "1140" },
+      { symbol: "SPCX", entryPrice: "123.99", exitPrice: "108.5" },
+      { symbol: "5536", label: "聖暉", entryPrice: "1140", exitPrice: "925" },
     ],
+    points: 10,
   },
   {
     teamId: "project-d",
     roundId: "r02",
     main: [
-      { symbol: "2308", label: "台達電", direction: "long", entryPrice: "1720" },
-      { symbol: "AAVE", direction: "long", entryPrice: "89.71" },
+      { symbol: "2308", label: "台達電", direction: "long", entryPrice: "1720", exitPrice: "1640" },
+      { symbol: "AAVE", direction: "long", entryPrice: "89.71", exitPrice: "96.14" },
     ],
     sprint: [
-      { symbol: "NEAR", entryPrice: "1.93" },
-      { symbol: "AAVE", entryPrice: "89.71" },
+      { symbol: "NEAR", entryPrice: "1.93", exitPrice: "1.688" },
+      { symbol: "AAVE", entryPrice: "89.71", exitPrice: "96.14" },
     ],
+    points: 24,
   },
   {
     teamId: "one-more-order",
     roundId: "r02",
     main: [
-      { symbol: "MUUSDT", direction: "short", entryPrice: "860.88" },
-      { symbol: "00632R", label: "0050反一", direction: "long", entryPrice: "10.47" },
+      { symbol: "MUUSDT", direction: "short", entryPrice: "860.88", exitPrice: "824.42" },
+      { symbol: "00632R", label: "0050反一", direction: "long", entryPrice: "10.47", exitPrice: "10.44" },
     ],
     sprint: [
-      { symbol: "3374", label: "精材", entryPrice: "349.5" },
-      { symbol: "2408", label: "南亞科", entryPrice: "396" },
+      { symbol: "3374", label: "精材", entryPrice: "349.5", exitPrice: "277" },
+      { symbol: "2408", label: "南亞科", entryPrice: "396", exitPrice: "360.5" },
     ],
+    points: 21,
   },
   {
     teamId: "guinea-pig",
     roundId: "r02",
     main: [
-      { symbol: "6669", label: "緯穎", direction: "long", entryPrice: "4725" },
-      { symbol: "2330", label: "台積電", direction: "long", entryPrice: "2300" },
+      { symbol: "6669", label: "緯穎", direction: "long", entryPrice: "4725", exitPrice: "5390" },
+      { symbol: "2330", label: "台積電", direction: "long", entryPrice: "2300", exitPrice: "2425" },
     ],
     sprint: [
-      { symbol: "2382", label: "廣達", entryPrice: "331.5" },
-      { symbol: "3037", label: "欣興", entryPrice: "778" },
+      { symbol: "2382", label: "廣達", entryPrice: "331.5", exitPrice: "291.5" },
+      { symbol: "3037", label: "欣興", entryPrice: "778", exitPrice: "787" },
+    ],
+    points: 26,
+  },
+  // R03 荷蘭站（8/10–8/21）
+  {
+    teamId: "strawberry-berry",
+    roundId: "r03",
+    main: [
+      { symbol: "SUI", direction: "long", entryPrice: "0.6908", exitPrice: "0.7386" },
+      { symbol: "HYPE", direction: "long", entryPrice: "54.12", exitPrice: "72.52" },
+    ],
+    sprint: [
+      { symbol: "ONDO", entryPrice: "0.3480" },
+      { symbol: "UNI", entryPrice: "4.051" },
+    ],
+  },
+  {
+    teamId: "redrock-racing",
+    roundId: "r03",
+    main: [
+      { symbol: "SPCX", direction: "long", entryPrice: "134.96" },
+      { symbol: "2059", label: "川湖", direction: "long", entryPrice: "12220" },
+    ],
+    sprint: [
+      { symbol: "BTC", entryPrice: "64890" },
+      { symbol: "2327", label: "國巨", entryPrice: "558" },
+    ],
+  },
+  {
+    teamId: "guinea-pig",
+    roundId: "r03",
+    main: [
+      { symbol: "2454", label: "聯發科", direction: "long", entryPrice: "3920" },
+      { symbol: "2330", label: "台積電", direction: "long", entryPrice: "2390" },
+    ],
+    sprint: [
+      { symbol: "2454", label: "聯發科", entryPrice: "3920" },
+      { symbol: "2330", label: "台積電", entryPrice: "2390" },
+    ],
+  },
+  {
+    teamId: "money-queue",
+    roundId: "r03",
+    main: [
+      { symbol: "2337", label: "旺宏", direction: "long", entryPrice: "124" },
+      { symbol: "4991", label: "環宇-KY", direction: "long", entryPrice: "490" },
+    ],
+    sprint: [
+      { symbol: "2337", label: "旺宏", entryPrice: "124" },
+      { symbol: "DOGE", entryPrice: "0.06930" },
+    ],
+  },
+  {
+    teamId: "one-more-order",
+    roundId: "r03",
+    main: [
+      { symbol: "2301", label: "光寶科", direction: "long", entryPrice: "271.5" },
+      { symbol: "2637", label: "慧洋-KY", direction: "long", entryPrice: "87" },
+    ],
+    sprint: [
+      { symbol: "PEPE", entryPrice: "0.000002890" },
+      { symbol: "3374", label: "精材", entryPrice: "325" },
+    ],
+  },
+  {
+    teamId: "youre-right",
+    roundId: "r03",
+    main: [
+      { symbol: "2308", label: "台達電", direction: "long", entryPrice: "1695" },
+      { symbol: "2303", label: "聯電", direction: "long", entryPrice: "117" },
+    ],
+    sprint: [
+      { symbol: "2308", label: "台達電", entryPrice: "1695" },
+      { symbol: "2303", label: "聯電", entryPrice: "117" },
+    ],
+  },
+  {
+    teamId: "project-d",
+    roundId: "r03",
+    main: [
+      { symbol: "AAVE", direction: "long", entryPrice: "90.61" },
+      { symbol: "H", direction: "long", entryPrice: "0.08389", exitPrice: "0.13223" },
+    ],
+    sprint: [
+      { symbol: "AAVE", entryPrice: "90.61" },
+      { symbol: "2409", label: "友達", entryPrice: "25.6" },
+    ],
+  },
+  {
+    teamId: "princess-yuanying",
+    roundId: "r03",
+    main: [
+      { symbol: "2344", label: "華邦電", direction: "long", entryPrice: "176.5" },
+      { symbol: "3189", label: "景碩", direction: "long", entryPrice: "820" },
+    ],
+    sprint: [
+      { symbol: "5274", label: "信驊", entryPrice: "16300" },
+      { symbol: "3189", label: "景碩", entryPrice: "820" },
     ],
   },
 ];
@@ -759,6 +868,37 @@ export function getRoundEntry(teamId: string, roundId: string): RoundEntry | und
 
 export function getEntriesForRound(roundId: string): RoundEntry[] {
   return ROUND_ENTRIES.filter((e) => e.roundId === roundId);
+}
+
+/** 台股／ETF 代號（走 TWSE）；其餘視為加密／海外合約（走 Binance） */
+export function isTwStockSymbol(symbol: string): boolean {
+  return /^\d{4}$/.test(symbol) || /^00[\dA-Z]{4}$/i.test(symbol);
+}
+
+/** 將結算檔中的 exitPrice 套到尚未平倉的標的上 */
+export function applySettledExits(
+  entry: RoundEntry,
+  exits?: Record<string, string>,
+): RoundEntry {
+  if (!exits) return entry;
+  const apply = <T extends { symbol: string; exitPrice?: string }>(leg: T): T => {
+    if (leg.exitPrice != null && leg.exitPrice !== "") return leg;
+    const exit = exits[leg.symbol];
+    if (exit == null || exit === "") return leg;
+    return { ...leg, exitPrice: exit };
+  };
+  return {
+    ...entry,
+    main: entry.main.map(apply),
+    sprint: entry.sprint.map(apply),
+  };
+}
+
+export function formatSettlePrice(price: number): string {
+  if (!Number.isFinite(price)) return String(price);
+  if (price >= 100) return String(Number(price.toFixed(2)));
+  if (price >= 1) return String(Number(price.toFixed(4)));
+  return String(Number(price.toPrecision(6)));
 }
 
 /** 所有已喊單標的（去重），供行情 API 使用 */
@@ -834,15 +974,19 @@ export type TeamSeasonStats = {
   cumulativeSprintReturnPct?: number;
 };
 
-export function getTeamSeasonStats(teamId: string): TeamSeasonStats {
+export function getTeamSeasonStats(
+  teamId: string,
+  settledExitsByRound?: Record<string, Record<string, string>>,
+): TeamSeasonStats {
   const team = getTeam(teamId)!;
   const entries = ROUND_ENTRIES.filter((e) => e.teamId === teamId && e.roundId !== "warmup");
   const points = entries.reduce((sum, e) => sum + (e.points ?? 0), 0);
   const mainReturns: number[] = [];
   const sprintReturns: number[] = [];
   for (const e of entries) {
-    const m = mainScore(e);
-    const s = sprintScore(e);
+    const resolved = applySettledExits(e, settledExitsByRound?.[e.roundId]);
+    const m = mainScore(resolved);
+    const s = sprintScore(resolved);
     if (typeof m === "number") mainReturns.push(m);
     if (typeof s === "number") sprintReturns.push(s);
   }

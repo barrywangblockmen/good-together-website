@@ -1,6 +1,7 @@
 import Image from "next/image";
 import type { MainLeg, SprintLeg, Team, TeamSeasonStats } from "@/lib/aitgp";
 import {
+  applySettledExits,
   getRoundEntry,
   getTeamCarSrc,
   getTeamLogoSrc,
@@ -277,6 +278,21 @@ function RoundLegsPanel({
   );
 }
 
+function TeamWebsiteLink({ team }: { team: Team }) {
+  if (!team.website) return null;
+  return (
+    <a
+      href={team.website}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="mt-1 inline-flex items-center gap-0.5 text-xs text-zinc-400 transition hover:text-white"
+    >
+      車隊官網
+      <span aria-hidden>→</span>
+    </a>
+  );
+}
+
 export function TeamCard({
   team,
   stats,
@@ -284,6 +300,7 @@ export function TeamCard({
   roundId,
   variant = "card",
   livePrices,
+  settledExits,
 }: {
   team: Team;
   stats: TeamSeasonStats;
@@ -291,8 +308,10 @@ export function TeamCard({
   roundId?: string;
   variant?: "card" | "list";
   livePrices?: Record<string, number>;
+  settledExits?: Record<string, string>;
 }) {
-  const entry = roundId ? getRoundEntry(team.id, roundId) : undefined;
+  const rawEntry = roundId ? getRoundEntry(team.id, roundId) : undefined;
+  const entry = rawEntry ? applySettledExits(rawEntry, settledExits) : undefined;
   const ms = entry ? mainScore(entry, livePrices) : undefined;
   const ss = entry ? sprintScore(entry, livePrices) : undefined;
 
@@ -332,6 +351,7 @@ export function TeamCard({
                 <div className="min-w-0 flex-1">
                   <h3 className="truncate text-base font-semibold text-white">{team.name}</h3>
                   <p className="text-xs text-zinc-400">車手 · {team.driver}</p>
+                  <TeamWebsiteLink team={team} />
                   {blurb}
                 </div>
               </div>
@@ -375,6 +395,7 @@ export function TeamCard({
         <div className="min-w-0 flex-1">
           <h3 className="truncate text-base font-semibold text-white">{team.name}</h3>
           <p className="text-xs text-zinc-400">車手 · {team.driver}</p>
+          <TeamWebsiteLink team={team} />
           {blurb}
         </div>
       </div>

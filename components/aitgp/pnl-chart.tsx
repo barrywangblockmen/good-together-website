@@ -15,6 +15,7 @@ import {
 } from "@/lib/aitgp-chart";
 import {
   TEAMS,
+  applySettledExits,
   getDefaultRoundId,
   getRoundEntry,
   mainScore,
@@ -147,13 +148,15 @@ function buildTeamSeriesOnGrid(
   livePrices: Record<string, number> | undefined,
   valueOffset: (teamId: string) => number,
   maxIdx: number,
+  settledExits?: Record<string, string>,
 ): TeamSeries[] {
   const field = race === "main" ? "main" : "sprint";
   const snapMap = buildSnapshotByHourKey(snapshots);
 
   return TEAMS.map((team) => {
     const points: ChartPoint[] = [];
-    const entry = getRoundEntry(team.id, roundId);
+    const raw = getRoundEntry(team.id, roundId);
+    const entry = raw ? applySettledExits(raw, settledExits) : undefined;
     const offset = valueOffset(team.id);
     let lastValue: number | undefined;
 
@@ -250,6 +253,7 @@ export function PnlChart() {
 
   const series = useMemo(() => {
     if (!chartCtx || maxIdx < 0) return [];
+    const settledExits = snapshot?.settledExits?.[chartCtx.roundId];
     const built = buildTeamSeriesOnGrid(
       chartCtx.grid,
       chartCtx.roundId,
@@ -258,12 +262,13 @@ export function PnlChart() {
       livePrices,
       chartCtx.valueOffset,
       maxIdx,
+      settledExits,
     );
     return built.map((s) => ({
       ...s,
       latestValue: s.points[s.points.length - 1]?.value,
     }));
-  }, [chartCtx, race, livePrices, maxIdx]);
+  }, [chartCtx, race, livePrices, maxIdx, snapshot?.settledExits]);
 
   const rankedLegend = useMemo(() => withRankNumbers(series), [series]);
 
