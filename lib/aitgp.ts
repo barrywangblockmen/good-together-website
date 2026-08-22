@@ -323,7 +323,8 @@ export const ROUNDS: Round[] = [
     circuit: "Zandvoort",
     tradingPeriod: "8/10（一）– 8/21（五）",
     settleDate: "8/24（一）結算",
-    status: "racing",
+    status: "settled",
+    note: "已結算完成：台股以 8/21（五）13:30 收盤價鎖定；美股代幣以 8/22 04:00 鎖定；加密以 8/22 08:00 鎖定（已提前平倉者沿用平倉價），盈虧不再更新。",
   },
   {
     id: "r04",
@@ -754,7 +755,7 @@ export const ROUND_ENTRIES: RoundEntry[] = [
     ],
     points: 26,
   },
-  // R03 荷蘭站（8/10–8/21）
+  // R03 荷蘭站（8/10–8/21）；已結算
   {
     teamId: "strawberry-berry",
     roundId: "r03",
@@ -763,93 +764,101 @@ export const ROUND_ENTRIES: RoundEntry[] = [
       { symbol: "HYPE", direction: "long", entryPrice: "54.12", exitPrice: "72.52" },
     ],
     sprint: [
-      { symbol: "ONDO", entryPrice: "0.3480" },
-      { symbol: "UNI", entryPrice: "4.051" },
+      { symbol: "ONDO", entryPrice: "0.3480", exitPrice: "0.3971" },
+      { symbol: "UNI", entryPrice: "4.051", exitPrice: "4.134" },
     ],
+    points: 28,
   },
   {
     teamId: "redrock-racing",
     roundId: "r03",
     main: [
-      { symbol: "SPCX", direction: "long", entryPrice: "134.96" },
-      { symbol: "2059", label: "川湖", direction: "long", entryPrice: "12220" },
+      { symbol: "SPCX", direction: "long", entryPrice: "134.96", exitPrice: "136.9" },
+      { symbol: "2059", label: "川湖", direction: "long", entryPrice: "12220", exitPrice: "13385" },
     ],
     sprint: [
-      { symbol: "BTC", entryPrice: "64890" },
-      { symbol: "2327", label: "國巨", entryPrice: "558" },
+      { symbol: "BTC", entryPrice: "64890", exitPrice: "78309.1" },
+      { symbol: "2327", label: "國巨", entryPrice: "558", exitPrice: "554" },
     ],
+    points: 24,
   },
   {
     teamId: "guinea-pig",
     roundId: "r03",
     main: [
-      { symbol: "2454", label: "聯發科", direction: "long", entryPrice: "3920" },
-      { symbol: "2330", label: "台積電", direction: "long", entryPrice: "2390" },
+      { symbol: "2454", label: "聯發科", direction: "long", entryPrice: "3920", exitPrice: "3790" },
+      { symbol: "2330", label: "台積電", direction: "long", entryPrice: "2390", exitPrice: "2410" },
     ],
     sprint: [
-      { symbol: "2454", label: "聯發科", entryPrice: "3920" },
-      { symbol: "2330", label: "台積電", entryPrice: "2390" },
+      { symbol: "2454", label: "聯發科", entryPrice: "3920", exitPrice: "3790" },
+      { symbol: "2330", label: "台積電", entryPrice: "2390", exitPrice: "2410" },
     ],
+    points: 12,
   },
   {
     teamId: "money-queue",
     roundId: "r03",
     main: [
-      { symbol: "2337", label: "旺宏", direction: "long", entryPrice: "124" },
-      { symbol: "4991", label: "環宇-KY", direction: "long", entryPrice: "490" },
+      { symbol: "2337", label: "旺宏", direction: "long", entryPrice: "124", exitPrice: "122.5" },
+      { symbol: "4991", label: "環宇-KY", direction: "long", entryPrice: "490", exitPrice: "481" },
     ],
     sprint: [
-      { symbol: "2337", label: "旺宏", entryPrice: "124" },
-      { symbol: "DOGE", entryPrice: "0.06930" },
+      { symbol: "2337", label: "旺宏", entryPrice: "124", exitPrice: "122.5" },
+      { symbol: "DOGE", entryPrice: "0.06930", exitPrice: "0.09156" },
     ],
+    points: 19,
   },
   {
     teamId: "one-more-order",
     roundId: "r03",
     main: [
-      { symbol: "2301", label: "光寶科", direction: "long", entryPrice: "271.5" },
-      { symbol: "2637", label: "慧洋-KY", direction: "long", entryPrice: "87" },
+      { symbol: "2301", label: "光寶科", direction: "long", entryPrice: "271.5", exitPrice: "261" },
+      { symbol: "2637", label: "慧洋-KY", direction: "long", entryPrice: "87", exitPrice: "102" },
     ],
     sprint: [
-      { symbol: "PEPE", entryPrice: "0.000002890" },
-      { symbol: "3374", label: "精材", entryPrice: "325" },
+      { symbol: "PEPE", entryPrice: "0.000002890", exitPrice: "0.0000041215" },
+      { symbol: "3374", label: "精材", entryPrice: "325", exitPrice: "306.5" },
     ],
+    points: 40,
   },
   {
     teamId: "youre-right",
     roundId: "r03",
     main: [
-      { symbol: "2308", label: "台達電", direction: "long", entryPrice: "1695" },
-      { symbol: "2303", label: "聯電", direction: "long", entryPrice: "117" },
+      { symbol: "2308", label: "台達電", direction: "long", entryPrice: "1695", exitPrice: "1750" },
+      { symbol: "2303", label: "聯電", direction: "long", entryPrice: "117", exitPrice: "116.5" },
     ],
     sprint: [
-      { symbol: "2308", label: "台達電", entryPrice: "1695" },
-      { symbol: "2303", label: "聯電", entryPrice: "117" },
+      { symbol: "2308", label: "台達電", entryPrice: "1695", exitPrice: "1750" },
+      { symbol: "2303", label: "聯電", entryPrice: "117", exitPrice: "116.5" },
     ],
+    points: 18,
   },
   {
     teamId: "project-d",
     roundId: "r03",
     main: [
-      { symbol: "AAVE", direction: "long", entryPrice: "90.61" },
+      { symbol: "AAVE", direction: "long", entryPrice: "90.61", exitPrice: "122.79" },
       { symbol: "H", direction: "long", entryPrice: "0.08389", exitPrice: "0.13223" },
     ],
     sprint: [
-      { symbol: "AAVE", entryPrice: "90.61" },
-      { symbol: "2409", label: "友達", entryPrice: "25.6" },
+      { symbol: "AAVE", entryPrice: "90.61", exitPrice: "122.79" },
+      { symbol: "2409", label: "友達", entryPrice: "25.6", exitPrice: "25.6" },
     ],
+    points: 43,
   },
   {
     teamId: "princess-yuanying",
     roundId: "r03",
     main: [
-      { symbol: "2344", label: "華邦電", direction: "long", entryPrice: "176.5" },
-      { symbol: "3189", label: "景碩", direction: "long", entryPrice: "820" },
+      { symbol: "2344", label: "華邦電", direction: "long", entryPrice: "176.5", exitPrice: "181" },
+      { symbol: "3189", label: "景碩", direction: "long", entryPrice: "820", exitPrice: "811" },
     ],
     sprint: [
-      { symbol: "5274", label: "信驊", entryPrice: "16300" },
-      { symbol: "3189", label: "景碩", entryPrice: "820" },
+      { symbol: "5274", label: "信驊", entryPrice: "16300", exitPrice: "15350" },
+      { symbol: "3189", label: "景碩", entryPrice: "820", exitPrice: "811" },
     ],
+    points: 12,
   },
 ];
 
