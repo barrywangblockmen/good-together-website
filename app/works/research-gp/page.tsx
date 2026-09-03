@@ -1,3 +1,12 @@
+import { notFound } from "next/navigation";
+
+// GT 預測市場暫時下架：直連 /works/research-gp 回 404。
+// 恢復時改回下方原始實作，並同步打開 /works 入口與 sitemap。
+export default function ResearchGrandPrixPage() {
+  notFound();
+}
+
+/*
 import type { Metadata } from "next";
 import { ResearchRaceDashboard } from "@/components/research-gp/research-race-dashboard";
 import { createMetadata } from "@/lib/metadata";
@@ -22,3 +31,4 @@ export const metadata: Metadata = {
 export default function ResearchGrandPrixPage() {
   return <ResearchRaceDashboard />;
 }
+*/

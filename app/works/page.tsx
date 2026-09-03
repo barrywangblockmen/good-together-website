@@ -85,6 +85,7 @@ export default async function WorksPage() {
               </div>
             </Link>
           </Reveal>
+          {/* GT 預測市場暫時下架
           <Reveal>
             <Link
               href="/works/research-gp"
@@ -115,6 +116,7 @@ export default async function WorksPage() {
               </div>
             </Link>
           </Reveal>
+          */}
           <div className="space-y-6">
             {works.map((w, i) => (
               <Reveal key={w.title} delay={0.06 * i}>

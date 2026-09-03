@@ -8,7 +8,7 @@ const paths = [
   "/themes",
   "/works",
   "/works/aitgp",
-  "/works/research-gp",
+  // "/works/research-gp", // GT 預測市場暫時下架
   "/activities",
   "/join",
   "/privacy",
