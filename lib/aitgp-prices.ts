@@ -16,10 +16,18 @@ export { AITGP_PRICE_TTL_SECONDS, type AitgpPriceSnapshot } from "@/lib/aitgp-ch
 export type AitgpPriceQuote = {
   symbol: string;
   price: number;
-  source: "binance-futures" | "twse" | "taifex";
+  source: "binance-futures" | "twse" | "taifex" | "us-stock";
 };
 
-const TWSE_OTC = new Set(["8255", "5536", "4991", "6620", "8027", "3374", "5274"]);
+const TWSE_OTC = new Set(["8255", "5536", "4991", "6620", "8027", "3374", "5274", "6913", "6510"]);
+
+/** Binance 合約代號與實際標的不符時排除（例：SUSDT 為加密幣，非 NYSE SentinelOne） */
+const BINANCE_EXCLUDED = new Set(["S"]);
+
+/** 美股代號 → Yahoo Finance ticker */
+const US_STOCK_TICKERS: Record<string, string> = {
+  S: "S",
+};
 
 /** Binance 合約代號與進場價單位不一致時需換算（例：1000PEPEUSDT → PEPE 現價 ÷ 1000） */
 const BINANCE_FUTURES_ALIASES: Record<string, { symbol: string; scale: number }> = {
@@ -113,8 +121,42 @@ function fromBinanceFuturesSymbol(futuresSymbol: string, entrySymbol: string): n
   return 1;
 }
 
+async function fetchUsStockPrices(symbols: string[]): Promise<AitgpPriceQuote[]> {
+  if (symbols.length === 0) return [];
+
+  const out: AitgpPriceQuote[] = [];
+  await Promise.all(
+    symbols.map(async (symbol) => {
+      const ticker = US_STOCK_TICKERS[symbol];
+      if (!ticker) return;
+      const res = await fetch(
+        `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1d&range=1d`,
+        {
+          headers: {
+            Accept: "application/json",
+            "User-Agent":
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          },
+          cache: "no-store",
+        },
+      );
+      if (!res.ok) return;
+      const data = (await res.json()) as {
+        chart?: { result?: { meta?: { regularMarketPrice?: number } }[] };
+      };
+      const price = data.chart?.result?.[0]?.meta?.regularMarketPrice;
+      if (typeof price !== "number" || !Number.isFinite(price)) return;
+      out.push({ symbol, price, source: "us-stock" });
+    }),
+  );
+  return out;
+}
+
 async function fetchBinanceFuturesPrices(symbols: string[]): Promise<AitgpPriceQuote[]> {
   if (symbols.length === 0) return [];
+
+  const filtered = symbols.filter((s) => !BINANCE_EXCLUDED.has(s));
+  if (filtered.length === 0) return [];
 
   const res = await fetch("https://fapi.binance.com/fapi/v1/ticker/price", {
     cache: "no-store",
@@ -122,12 +164,12 @@ async function fetchBinanceFuturesPrices(symbols: string[]): Promise<AitgpPriceQ
   if (!res.ok) throw new Error(`Binance futures HTTP ${res.status}`);
 
   const rows = (await res.json()) as { symbol: string; price: string }[];
-  const need = new Set(symbols.map(toBinanceFuturesSymbol));
+  const need = new Set(filtered.map(toBinanceFuturesSymbol));
   const out: AitgpPriceQuote[] = [];
 
   for (const row of rows) {
     if (!need.has(row.symbol)) continue;
-    const entrySymbol = symbols.find((s) => toBinanceFuturesSymbol(s) === row.symbol);
+    const entrySymbol = filtered.find((s) => toBinanceFuturesSymbol(s) === row.symbol);
     if (!entrySymbol) continue;
     const scale = fromBinanceFuturesSymbol(row.symbol, entrySymbol) ?? 1;
     const price = Number(row.price) / scale;
@@ -173,18 +215,21 @@ async function fetchQuotes(): Promise<AitgpLatestPrices> {
   const tracked = allSymbols.filter((s) => !isTaifexSymbol(s));
 
   const twSymbols = tracked.filter(isTwStock);
-  const binanceSymbols = tracked.filter((s) => !isTwStock(s));
+  const usStockSymbols = tracked.filter((s) => US_STOCK_TICKERS[s] != null);
+  const binanceSymbols = tracked.filter((s) => !isTwStock(s) && US_STOCK_TICKERS[s] == null);
 
-  const [binanceQuotes, twseQuotes, taifexPrices, manualPrices, previous] = await Promise.all([
-    fetchBinanceFuturesPrices(binanceSymbols),
-    fetchTwsePrices(twSymbols),
-    fetchTaifexPrices(collectTaifexTargets()),
-    readManualPrices(),
-    readLatestPrices(),
-  ]);
+  const [binanceQuotes, twseQuotes, usStockQuotes, taifexPrices, manualPrices, previous] =
+    await Promise.all([
+      fetchBinanceFuturesPrices(binanceSymbols),
+      fetchTwsePrices(twSymbols),
+      fetchUsStockPrices(usStockSymbols),
+      fetchTaifexPrices(collectTaifexTargets()),
+      readManualPrices(),
+      readLatestPrices(),
+    ]);
 
   const prices: Record<string, number> = {};
-  for (const q of [...binanceQuotes, ...twseQuotes]) {
+  for (const q of [...binanceQuotes, ...twseQuotes, ...usStockQuotes]) {
     prices[q.symbol] = q.price;
   }
   for (const [symbol, price] of Object.entries(taifexPrices)) {

@@ -334,7 +334,7 @@ export const ROUNDS: Round[] = [
     circuit: "Madring",
     tradingPeriod: "8/31（一）– 9/11（五）",
     settleDate: "9/14（一）結算",
-    status: "upcoming",
+    status: "racing",
   },
   {
     id: "r05",
@@ -859,6 +859,104 @@ export const ROUND_ENTRIES: RoundEntry[] = [
       { symbol: "3189", label: "景碩", entryPrice: "820", exitPrice: "811" },
     ],
     points: 12,
+  },
+  // R04 西班牙站（8/31–9/11）；進行中
+  {
+    teamId: "strawberry-berry",
+    roundId: "r04",
+    main: [
+      { symbol: "XAUT", label: "XAU", direction: "long", entryPrice: "4439.5" },
+      { symbol: "HYPE", direction: "long", entryPrice: "80.28" },
+    ],
+    sprint: [
+      { symbol: "ONDO", entryPrice: "0.3438" },
+      { symbol: "UNI", entryPrice: "5.13" },
+    ],
+  },
+  {
+    teamId: "one-more-order",
+    roundId: "r04",
+    main: [
+      { symbol: "6805", label: "富世達", direction: "long", entryPrice: "2290" },
+      { symbol: "6913", label: "鴻呈", direction: "long", entryPrice: "167" },
+    ],
+    sprint: [
+      { symbol: "ENA", entryPrice: "0.14665" },
+      { symbol: "3374", label: "精材", entryPrice: "390.5" },
+    ],
+  },
+  {
+    teamId: "project-d",
+    roundId: "r04",
+    main: [
+      { symbol: "TUT", direction: "long", entryPrice: "0.03583" },
+      { symbol: "GRASS", direction: "long", entryPrice: "0.366" },
+    ],
+    sprint: [
+      { symbol: "6770", label: "力積電", entryPrice: "69" },
+      { symbol: "GRASS", entryPrice: "0.366" },
+    ],
+  },
+  {
+    teamId: "youre-right",
+    roundId: "r04",
+    main: [
+      { symbol: "2308", label: "台達電", direction: "long", entryPrice: "1795" },
+      { symbol: "ETH", direction: "long", entryPrice: "2416.89" },
+    ],
+    sprint: [
+      { symbol: "2308", label: "台達電", entryPrice: "1795" },
+      { symbol: "BNB", entryPrice: "684.73" },
+    ],
+  },
+  {
+    teamId: "guinea-pig",
+    roundId: "r04",
+    main: [
+      // 9/2 除權（每股配股約 1.9827946）：開倉 7100 → 7100/(1+1.9827946)=2380.32
+      { symbol: "6669", label: "緯穎", direction: "long", entryPrice: "2380.32" },
+      { symbol: "2382", label: "廣達", direction: "long", entryPrice: "329.5" },
+    ],
+    sprint: [
+      { symbol: "6669", label: "緯穎", entryPrice: "2380.32" },
+      { symbol: "2382", label: "廣達", entryPrice: "329.5" },
+    ],
+  },
+  {
+    teamId: "money-queue",
+    roundId: "r04",
+    main: [
+      { symbol: "SKR", direction: "short", entryPrice: "0.0318", exitPrice: "0.024697" },
+      { symbol: "ARB", direction: "short", entryPrice: "0.114" },
+    ],
+    sprint: [
+      { symbol: "6510", label: "精測", entryPrice: "2700" },
+      { symbol: "3231", label: "緯創", entryPrice: "176" },
+    ],
+  },
+  {
+    teamId: "princess-yuanying",
+    roundId: "r04",
+    main: [
+      { symbol: "2313", label: "華通", direction: "long", entryPrice: "240" },
+      { symbol: "8046", label: "南電", direction: "long", entryPrice: "1165" },
+    ],
+    sprint: [
+      { symbol: "5274", label: "信驊", entryPrice: "15630" },
+      { symbol: "8046", label: "南電", entryPrice: "1165" },
+    ],
+  },
+  {
+    teamId: "redrock-racing",
+    roundId: "r04",
+    main: [
+      { symbol: "5536", label: "聖暉", direction: "long", entryPrice: "880" },
+      { symbol: "UNI", direction: "long", entryPrice: "5.15" },
+    ],
+    sprint: [
+      { symbol: "S", label: "SentinelOne", entryPrice: "21.49" },
+      { symbol: "SPCX", entryPrice: "141.5" },
+    ],
   },
 ];
 
