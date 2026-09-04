@@ -127,26 +127,30 @@ async function fetchUsStockPrices(symbols: string[]): Promise<AitgpPriceQuote[]>
   const out: AitgpPriceQuote[] = [];
   await Promise.all(
     symbols.map(async (symbol) => {
-      const ticker = US_STOCK_TICKERS[symbol];
-      if (!ticker) return;
-      const res = await fetch(
-        `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1d&range=1d`,
-        {
-          headers: {
-            Accept: "application/json",
-            "User-Agent":
-              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      try {
+        const ticker = US_STOCK_TICKERS[symbol];
+        if (!ticker) return;
+        const res = await fetch(
+          `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1d&range=1d`,
+          {
+            headers: {
+              Accept: "application/json",
+              "User-Agent":
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            },
+            cache: "no-store",
           },
-          cache: "no-store",
-        },
-      );
-      if (!res.ok) return;
-      const data = (await res.json()) as {
-        chart?: { result?: { meta?: { regularMarketPrice?: number } }[] };
-      };
-      const price = data.chart?.result?.[0]?.meta?.regularMarketPrice;
-      if (typeof price !== "number" || !Number.isFinite(price)) return;
-      out.push({ symbol, price, source: "us-stock" });
+        );
+        if (!res.ok) return;
+        const data = (await res.json()) as {
+          chart?: { result?: { meta?: { regularMarketPrice?: number } }[] };
+        };
+        const price = data.chart?.result?.[0]?.meta?.regularMarketPrice;
+        if (typeof price !== "number" || !Number.isFinite(price)) return;
+        out.push({ symbol, price, source: "us-stock" });
+      } catch {
+        // 單一美股失敗不阻斷整批
+      }
     }),
   );
   return out;
@@ -158,56 +162,73 @@ async function fetchBinanceFuturesPrices(symbols: string[]): Promise<AitgpPriceQ
   const filtered = symbols.filter((s) => !BINANCE_EXCLUDED.has(s));
   if (filtered.length === 0) return [];
 
-  const res = await fetch("https://fapi.binance.com/fapi/v1/ticker/price", {
-    cache: "no-store",
-  });
-  if (!res.ok) throw new Error(`Binance futures HTTP ${res.status}`);
+  try {
+    const res = await fetch("https://fapi.binance.com/fapi/v1/ticker/price", {
+      cache: "no-store",
+    });
+    if (!res.ok) throw new Error(`Binance futures HTTP ${res.status}`);
 
-  const rows = (await res.json()) as { symbol: string; price: string }[];
-  const need = new Set(filtered.map(toBinanceFuturesSymbol));
-  const out: AitgpPriceQuote[] = [];
+    const rows = (await res.json()) as { symbol: string; price: string }[];
+    const need = new Set(filtered.map(toBinanceFuturesSymbol));
+    const out: AitgpPriceQuote[] = [];
 
-  for (const row of rows) {
-    if (!need.has(row.symbol)) continue;
-    const entrySymbol = filtered.find((s) => toBinanceFuturesSymbol(s) === row.symbol);
-    if (!entrySymbol) continue;
-    const scale = fromBinanceFuturesSymbol(row.symbol, entrySymbol) ?? 1;
-    const price = Number(row.price) / scale;
-    if (!Number.isFinite(price)) continue;
-    out.push({ symbol: entrySymbol, price, source: "binance-futures" });
+    for (const row of rows) {
+      if (!need.has(row.symbol)) continue;
+      const entrySymbol = filtered.find((s) => toBinanceFuturesSymbol(s) === row.symbol);
+      if (!entrySymbol) continue;
+      const scale = fromBinanceFuturesSymbol(row.symbol, entrySymbol) ?? 1;
+      const price = Number(row.price) / scale;
+      if (!Number.isFinite(price)) continue;
+      out.push({ symbol: entrySymbol, price, source: "binance-futures" });
+    }
+
+    return out;
+  } catch {
+    return [];
   }
-
-  return out;
 }
 
 async function fetchTwsePrices(symbols: string[]): Promise<AitgpPriceQuote[]> {
   if (symbols.length === 0) return [];
 
   const exCh = symbols.map(twseExCh).join("|");
-  const res = await fetch(
-    `https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=${encodeURIComponent(exCh)}`,
-    {
-      headers: {
-        Accept: "application/json",
-        Referer: "https://mis.twse.com.tw/stock/index.jsp",
-      },
-      cache: "no-store",
-    },
-  );
-  if (!res.ok) throw new Error(`TWSE MIS HTTP ${res.status}`);
+  const url = `https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=${encodeURIComponent(exCh)}`;
+  const headers = {
+    Accept: "application/json",
+    Referer: "https://mis.twse.com.tw/stock/index.jsp",
+  };
 
-  const data = (await res.json()) as { msgArray?: TwseRow[] };
-  const out: AitgpPriceQuote[] = [];
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const res = await fetch(url, { headers, cache: "no-store" });
+      if (!res.ok) throw new Error(`TWSE MIS HTTP ${res.status}`);
 
-  for (const row of data.msgArray ?? []) {
-    const code = row.c;
-    if (!code || !symbols.includes(code)) continue;
-    const price = parseTwsePrice(row);
-    if (price == null) continue;
-    out.push({ symbol: code, price, source: "twse" });
+      const data = (await res.json()) as { msgArray?: TwseRow[] };
+      const out: AitgpPriceQuote[] = [];
+
+      for (const row of data.msgArray ?? []) {
+        const code = row.c;
+        if (!code || !symbols.includes(code)) continue;
+        const price = parseTwsePrice(row);
+        if (price == null) continue;
+        out.push({ symbol: code, price, source: "twse" });
+      }
+
+      return out;
+    } catch {
+      if (attempt < 2) await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+    }
   }
 
-  return out;
+  return [];
+}
+
+async function safeSource<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
+  try {
+    return await fn();
+  } catch {
+    return fallback;
+  }
 }
 
 async function fetchQuotes(): Promise<AitgpLatestPrices> {
@@ -220,12 +241,12 @@ async function fetchQuotes(): Promise<AitgpLatestPrices> {
 
   const [binanceQuotes, twseQuotes, usStockQuotes, taifexPrices, manualPrices, previous] =
     await Promise.all([
-      fetchBinanceFuturesPrices(binanceSymbols),
-      fetchTwsePrices(twSymbols),
-      fetchUsStockPrices(usStockSymbols),
-      fetchTaifexPrices(collectTaifexTargets()),
-      readManualPrices(),
-      readLatestPrices(),
+      safeSource(() => fetchBinanceFuturesPrices(binanceSymbols), []),
+      safeSource(() => fetchTwsePrices(twSymbols), []),
+      safeSource(() => fetchUsStockPrices(usStockSymbols), []),
+      safeSource(() => fetchTaifexPrices(collectTaifexTargets()), {}),
+      safeSource(() => readManualPrices(), {}),
+      safeSource(() => readLatestPrices(), null),
     ]);
 
   const prices: Record<string, number> = {};
@@ -239,7 +260,7 @@ async function fetchQuotes(): Promise<AitgpLatestPrices> {
   for (const [symbol, price] of Object.entries(manualPrices)) {
     if (prices[symbol] == null) prices[symbol] = price;
   }
-  // 期交所盤中無收盤列時，沿用上一筆成功抓到的價（避免 MTX 整段消失）
+  // 單一來源失敗時沿用上一筆成功價，避免整站 502
   if (previous?.prices) {
     for (const sym of allSymbols) {
       if (prices[sym] == null && previous.prices[sym] != null) {
@@ -302,5 +323,11 @@ export async function getAitgpPrices(): Promise<AitgpPriceSnapshot> {
     return toSnapshot(latest, chartHistory, settledExits);
   }
 
-  return refreshAitgpPrices();
+  try {
+    return await refreshAitgpPrices();
+  } catch (err) {
+    // 刷新失敗時仍回傳磁碟快取，避免前端整頁 502 / 圖表空白
+    if (latest) return toSnapshot(latest, chartHistory, settledExits);
+    throw err;
+  }
 }

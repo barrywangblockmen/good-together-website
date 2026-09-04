@@ -927,7 +927,7 @@ export const ROUND_ENTRIES: RoundEntry[] = [
     roundId: "r04",
     main: [
       { symbol: "SKR", direction: "short", entryPrice: "0.0318", exitPrice: "0.024697" },
-      { symbol: "ARB", direction: "short", entryPrice: "0.114" },
+      { symbol: "ARB", direction: "short", entryPrice: "0.114", exitPrice: "0.12441" },
     ],
     sprint: [
       { symbol: "6510", label: "精測", entryPrice: "2700" },
