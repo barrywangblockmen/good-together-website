@@ -188,22 +188,57 @@ async function fetchBinanceFuturesPrices(symbols: string[]): Promise<AitgpPriceQ
   }
 }
 
+async function fetchTwseMisJson(exCh: string): Promise<{ msgArray?: TwseRow[] }> {
+  // EC2 上 undici/fetch 對 MIS 常 ECONNRESET；改用 Node https（HTTP/1.1）較穩定
+  const { get } = await import("node:https");
+  const url = `https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=${encodeURIComponent(exCh)}`;
+
+  return new Promise((resolve, reject) => {
+    const req = get(
+      url,
+      {
+        headers: {
+          Accept: "application/json",
+          Referer: "https://mis.twse.com.tw/stock/index.jsp",
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        },
+        timeout: 12_000,
+      },
+      (res) => {
+        let body = "";
+        res.setEncoding("utf8");
+        res.on("data", (chunk) => {
+          body += chunk;
+        });
+        res.on("end", () => {
+          if ((res.statusCode ?? 0) < 200 || (res.statusCode ?? 0) >= 300) {
+            reject(new Error(`TWSE MIS HTTP ${res.statusCode}`));
+            return;
+          }
+          try {
+            resolve(JSON.parse(body.trim()) as { msgArray?: TwseRow[] });
+          } catch (err) {
+            reject(err);
+          }
+        });
+      },
+    );
+    req.on("timeout", () => {
+      req.destroy(new Error("TWSE MIS timeout"));
+    });
+    req.on("error", reject);
+  });
+}
+
 async function fetchTwsePrices(symbols: string[]): Promise<AitgpPriceQuote[]> {
   if (symbols.length === 0) return [];
 
   const exCh = symbols.map(twseExCh).join("|");
-  const url = `https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=${encodeURIComponent(exCh)}`;
-  const headers = {
-    Accept: "application/json",
-    Referer: "https://mis.twse.com.tw/stock/index.jsp",
-  };
 
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const res = await fetch(url, { headers, cache: "no-store" });
-      if (!res.ok) throw new Error(`TWSE MIS HTTP ${res.status}`);
-
-      const data = (await res.json()) as { msgArray?: TwseRow[] };
+      const data = await fetchTwseMisJson(exCh);
       const out: AitgpPriceQuote[] = [];
 
       for (const row of data.msgArray ?? []) {
