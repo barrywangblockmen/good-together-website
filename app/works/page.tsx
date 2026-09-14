@@ -7,7 +7,7 @@ import { createMetadata } from "@/lib/metadata";
 export const metadata = createMetadata({
   title: "成果展示",
   description:
-    "台灣共好交流協會持續推動各項計畫與活動，包含 AI 賦能企業轉型、Web3 社群共學與永續創新論壇等重點成果。",
+    "台灣共好交流協會持續推動各項計畫與活動，包含 AI 賦能企業轉型、Web3 社群共學、星隕原野多人網頁遊戲與永續創新論壇等重點成果。",
   path: "/works",
 });
 
@@ -55,6 +55,41 @@ export default async function WorksPage() {
 
       <section className="border-t border-edge bg-surface">
         <div className="mx-auto max-w-6xl px-4 py-14 md:px-6 md:py-20">
+          <Reveal>
+            <article className="relative mb-8 overflow-hidden rounded-2xl border border-emerald-400/30 bg-gradient-to-br from-[#102c2b] via-[#102426] to-[#171c30] px-6 py-7 shadow-sm md:px-8 md:py-9">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="inline-flex rounded-full bg-emerald-300/15 px-3 py-1 text-sm font-medium text-emerald-200">
+                  AI 協作開發 · 互動作品
+                </span>
+                <span className="text-sm text-slate-300">遊戲測試版</span>
+              </div>
+              <div className="mt-5 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+                <div className="max-w-3xl">
+                  <p className="text-sm tracking-widest text-emerald-200/80">STARFALL WILDS</p>
+                  <h2 className="mt-2 text-3xl font-semibold text-white md:text-4xl">星隕原野</h2>
+                  <p className="mt-4 text-base leading-relaxed text-slate-200">
+                    打開瀏覽器，踏入像素風格的多人冒險世界。從六種職業中選擇自己的戰鬥方式，穿越森林、發現地標、深入危險區域；沒有任務清單，靠探索、打怪與收集裝備累積成長。
+                  </p>
+                  <p className="mt-3 text-base leading-relaxed text-slate-300">
+                    以 AI 協作將遊戲構想實作成可遊玩的網頁原型，整合即時多人同步、點擊自動尋路、技能學習與升級，以及自動拾取、換裝與售出系統，讓玩家專注於探索與戰鬥。
+                  </p>
+                  <ul className="mt-5 flex flex-wrap gap-2 text-sm text-emerald-100" aria-label="遊戲特色">
+                    {["六種職業", "即時多人", "自由探索", "技能與裝備成長"].map((feature) => (
+                      <li key={feature} className="rounded-full border border-emerald-200/20 px-3 py-1.5">{feature}</li>
+                    ))}
+                  </ul>
+                </div>
+                <a
+                  href="/starfall-wilds/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex shrink-0 self-start items-center justify-center gap-2 rounded-full bg-emerald-200 px-6 py-3 text-base font-semibold text-slate-950 transition hover:bg-emerald-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-200 md:self-center"
+                >
+                  開始探索<span aria-hidden>↗</span><span className="sr-only">星隕原野（另開分頁）</span>
+                </a>
+              </div>
+            </article>
+          </Reveal>
           <Reveal>
             <Link
               href="/works/aitgp"
